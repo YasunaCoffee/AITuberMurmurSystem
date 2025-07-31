@@ -1,0 +1,170 @@
+# ============================================================
+# AITuber システム設定ファイル
+# このファイルは AITuber システムの各種設定を管理します。
+# ============================================================
+
+# ============================================================
+# 1. API認証情報
+# ============================================================
+# 注意: 実際の値は .env ファイルで管理し、ここには環境変数名のみを記載
+api_keys:
+  # OpenAI API設定 (必須 - 全システムで使用)
+  openai: OPENAI_API_KEY
+  
+  # YouTube Live設定 (必須 - コメント取得に使用)
+  youtube_video_id: YOUTUBE_VIDEO_ID
+  
+  # OBS WebSocket設定 (必須 - 配信映像制御に使用)
+  obs_ws_password: OBS_WS_PASSWORD
+  obs_ws_host: OBS_WS_HOST
+  obs_ws_port: OBS_WS_PORT
+
+# ============================================================
+# 2. ファイル・ディレクトリパス設定
+# ============================================================
+# 注意: このファイルからの相対パスで指定
+paths:
+  # 必須ディレクトリ
+  prompts: "prompts"                                        # プロンプトファイル格納ディレクトリ
+  txt: "txt"                                                # テキストファイル格納ディレクトリ
+  summary: "summary"                                        # 配信記録要約ディレクトリ
+  
+  # 個別ファイルパス
+  output_text_history: "txt/output_text_history.txt"        # 発言履歴保存
+  memory_file: "txt/kioku_hayate.txt"                         # 長期記憶データ
+  summary_dir: "summary"                                    # 配信記録要約（互換性のため保持）
+  conversation_history_dir: "conversation_history"         # 会話履歴
+  ng_words_file: "txt/ng_word.txt"                         # NGワードファイル
+
+# ============================================================
+# 3. OpenAI設定
+# ============================================================
+openai:
+  # モデル設定
+  models:
+    default: "gpt-4.1"           # デフォルトモデル
+    selection: "gpt-4.1"         # 選択処理用
+    response: "gpt-4.1"          # 応答生成用
+    emotion: "gpt-4o-mini"       # 感情処理用 (軽量モデル)
+    stream_summary: "gpt-4.1"    # 配信要約用
+    theme_scoring: "gpt-4.1"     # テーマスコア測定用
+    conversation_history: "gpt-4.1"  # 会話履歴処理用
+  
+  # API設定
+  api:
+    max_tokens_default: 1024                # デフォルトの最大トークン数
+    max_tokens_test: 10                     # テスト用の最大トークン数
+    max_tokens_theme_scoring: 1024          # テーマスコア測定用の最大トークン数
+    max_tokens_stream_summary: 2048         # 配信要約用の最大トークン数
+    max_tokens_memory: 512                  # メモリ管理用の最大トークン数
+    save_previous_chat_num: 2               # 保持する前の会話数
+
+# ============================================================
+# 4. 音声設定
+# ============================================================
+audio:
+  # 音声合成設定 (AivisSpeech)
+  synthesis:
+    aivis_url: "http://127.0.0.1:10101"    # AivisSpeechエンジンURL
+    output_sampling_rate: 24000             # 音声出力サンプリングレート
+    output_stereo: false                    # ステレオ出力設定
+  
+  # 音声再生設定
+  playback:
+    default_output_device_id: 3             # MacBook Proのスピーカー
+    error_audio_sample_rate: 16000          # エラー音声のサンプリングレート
+    thread_join_timeout: 2.0                # スレッド終了待機タイムアウト（秒）
+    worker_loop_timeout: 0.5                # ワーカーループタイムアウト（秒）
+    audio_normalize_target: 32767.0         # 音声正規化のターゲット値
+    min_silence_seconds: 0.08               # 最小無音時間（秒）
+    max_silence_seconds: 2.0                # 最大無音時間（秒）
+    natural_variation_ratio: 0.20           # 自然なばらつきの比率
+
+# ============================================================
+# 5. テキスト処理設定
+# ============================================================
+text_processing:
+  max_length: 50                          # 音声合成に最適な最大文字数
+  min_merge_length: 13                    # 短い行の結合判定基準
+
+# ============================================================
+# 6. コメント・チャット処理設定
+# ============================================================
+comments:
+  # 基本設定
+  max_length: 150                         # コメントの最大長
+  recent_comments_max_length: 20          # 最近のコメント最大数
+  max_history_length: 30                  # 会話履歴最大長
+  check_interval: 0.1                     # コメントチェック間隔（秒）
+  
+  # 接続・管理設定
+  max_reconnect_attempts: 5               # 最大再接続試行回数
+  thread_timeout: 10                      # スレッドタイムアウト（秒）
+  min_comments_for_regular: 5             # 常連認定の最小コメント数
+  
+  # チャット処理設定
+  buffer_size: 20                         # バッファサイズ
+  buffer_timeout: 5.0                     # バッファタイムアウト（秒）
+
+# ============================================================
+# 7. メモリ・記憶管理設定
+# ============================================================
+memory:
+  max_utterances: 20                      # 短期記憶の最大保持数
+  summary_interval: 300                   # 要約間隔（秒）
+  max_recent_conversations: 5             # 保持する最新の会話数
+  compression_threshold: 10               # 圧縮を開始する会話数
+  search_top_k: 3                         # 記憶検索の上位K件
+  long_term_compression_threshold: 5      # 長期記憶の圧縮しきい値（この数の要約ブロックが溜まったら、さらに要約する）
+
+# ============================================================
+# 8. テーマ管理設定
+# ============================================================
+theme:
+  min_theme_duration: 60                  # 最小テーマ継続時間（秒）
+  max_theme_duration: 120                 # 最大テーマ継続時間（秒）
+  min_interest_score: 6                   # テーマ開始最小スコア
+  continuation_threshold: 5               # 継続判定最小スコア
+  
+  # テーマファイル設定
+  default_theme_file: "prompts/poem.txt"  # デフォルトのテーマファイル
+  current_theme_file: null                           # 現在使用中のテーマファイル（nullの場合はdefaultを使用）
+
+# ============================================================
+# 9. ネットワーク設定
+# ============================================================
+network:
+  max_retries: 3                          # 最大リトライ回数
+  retry_delay: 2.0                        # リトライ間隔（秒）
+  connection_timeout: 10.0                # 接続タイムアウト（秒）
+  api_timeout: 20                         # デフォルトのAPIタイムアウト（秒）
+  api_timeout_summary: 60                 # 【追加】配信要約用の長いタイムアウト（秒）
+
+# ============================================================
+# 10. OBS字幕設定
+# ============================================================
+obs_subtitles:
+  enabled: true                           # 字幕表示の有効/無効
+
+# ============================================================
+# 11. システム設定
+# ============================================================
+system:
+  main_loop_interval: 0.05                # メインループ間隔（秒）
+  stream_timeout_seconds: 420             # 配信自動終了タイマー（秒）。0以下で無効。420秒=7分
+  
+  # 音声完了待機タイムアウト設定
+  audio_completion_timeout: 30.0          # 音声完了待機のデフォルトタイムアウト（秒）
+  bridge_audio_wait_time: 1.0             # つなぎ音声の合成待機時間（秒）
+  bridge_audio_playback_timeout: 90.0     # つなぎ音声再生の最大待機時間（秒）
+  final_greeting_generation_timeout: 30.0 # 終了挨拶生成の最大待機時間（秒）
+  final_greeting_playback_timeout: 180.0  # 終了挨拶再生の最大待機時間（秒）
+
+# ============================================================
+# 12. デバッグ設定
+# ============================================================
+debug:
+  verbose_logging: false                  # 詳細ログ出力
+  test_mode: false                        # テストモード
+  mock_apis: false                        # APIモック使用
+  log_level: "INFO"                       # ログレベル (DEBUG, INFO, WARNING, ERROR)

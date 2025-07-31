@@ -1,0 +1,60 @@
+[project]
+name = "z-aituber"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.11"
+package-mode = false
+dependencies = [
+    "numpy",
+    "pygame",
+    "sounddevice",
+    "openai",
+    "obsws-python",
+    "python-dotenv",
+    "filelock",
+    "faiss-cpu",
+    "pyyaml",
+    "pytchat",
+    "requests",
+    "soundfile",
+    "obs-websocket-py",
+    "pytz (>=2025.2,<2026.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.poetry]
+name = "z-aituber"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+openai = "^1.35.3"
+sounddevice = "^0.4.7"
+numpy = "^1.26.4"
+schedule = "^1.2.2"
+pyyaml = "^6.0.1"
+tiktoken = "^0.7.0"
+requests = "^2.31.0"
+soundfile = "^0.12.1"
+obs-websocket-py = "^1.0.0"
+

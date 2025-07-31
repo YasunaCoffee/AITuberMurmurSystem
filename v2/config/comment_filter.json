@@ -1,0 +1,21 @@
+{
+  "ng_words": [
+    "宣伝",
+    "広告",
+    "チャンネル登録",
+    "相互登録",
+    "フォロバ",
+    "LINE追加",
+    "稼げる",
+    "副業",
+    "投資",
+    "FX"
+  ],
+  "allowed_users": [],
+  "blocked_users": [],
+  "min_comment_length": 2,
+  "max_comment_length": 100,
+  "enable_url_filter": true,
+  "enable_repeat_filter": true,
+  "max_emoji_count": 5
+}

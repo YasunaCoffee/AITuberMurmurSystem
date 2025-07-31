@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "defaultMode": "default",
+    "allow": [
+      "Bash(rg:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(grep:*)",
+      "Bash(diff:*)",
+      "Bash(mkdir:*)",
+      "Bash(cat:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker compose exec:*)",
+      "Bash(docker compose logs:*)"
+    ],
+    "deny": [
+      "Bash(sudo:*)",
+      "Bash(rm -rf:*)",
+      "Bash(git push:*)",
+      "Bash(git reset:*)",
+      "Bash(git rebase:*)",
+      "Read(.env.*)",
+      "Read(id_rsa)",
+      "Read(id_ed25519)",
+      "Read(**/*token*)",
+      "Write(.env*)",
+      "Write(**/secrets/**)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm remove:*)"
+    ]
+  }
+}
