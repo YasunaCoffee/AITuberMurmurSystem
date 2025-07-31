@@ -104,6 +104,10 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
 ./stop_monologue.sh
 ```
 
+## 参考資料
+
+- [参考YouTube動画](https://www.youtube.com/watch?v=GvLcysqJIuk)
+
 ## トラブルシューティング
 
 ### 一般的な問題
