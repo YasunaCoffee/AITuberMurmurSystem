@@ -18,6 +18,17 @@ def test_cli_help_exits_zero():
     assert "aituber" in out or "usage" in out.lower()
 
 
+def test_cli_status_and_stop_help():
+    for sub in ("status", "stop", "shutdown"):
+        r = subprocess.run(
+            [sys.executable, "-m", "aituber", sub, "-h"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+        )
+        assert r.returncode == 0, (sub, r.stderr)
+
+
 def test_cli_character_validate_hayate():
     r = subprocess.run(
         [

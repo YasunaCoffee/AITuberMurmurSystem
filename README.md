@@ -16,7 +16,7 @@ AITuberのための自動配信システム。テーマに基づいて自動的�
 
 ### 必要なソフトウェア
 
-- Python 3.8以上
+- Python 3.11以上（`pyproject.toml` の `requires-python` に準拠）
 - Poetry（パッケージ管理）
 - AivisSpeech Engine
 - OBS Studio
@@ -27,7 +27,7 @@ AITuberのための自動配信システム。テーマに基づいて自動的�
 1. リポジトリのクローン：
 ```bash
 git clone [repository-url]
-cd monologue
+cd AITuberMurmurSystem
 ```
 
 2. 依存関係のインストール：
@@ -65,7 +65,30 @@ paths:
 
 ## 実行方法
 
-### Windows環境
+### CLI（推奨）
+
+Poetry 環境から `aituber` コマンドで起動・停止・状態確認ができます（OS 共通）。
+
+| 操作 | コマンド例 |
+|------|------------|
+| フォアグラウンド起動 | `poetry run aituber run` |
+| テーマ指定 | `poetry run aituber run --theme test_theme.txt`（`prompts/` 配下など実際のパス） |
+| キャラ YAML 指定 | `poetry run aituber run --character characters/hayate.yaml` |
+| バックグラウンド起動 | `poetry run aituber run --detach`（ログは既定で `monologue.log`、`--log-file` で変更） |
+| 終了依頼 | `poetry run aituber stop` または `poetry run aituber shutdown` |
+| 強制終了 | `poetry run aituber stop --force`（`-f`） |
+| 状態 | `poetry run aituber status` |
+| キャラ確認・検証 | `poetry run aituber character info` / `poetry run aituber character validate characters/hayate.yaml` |
+
+`python main.py` を直接実行しても同じアプリが起動します。`python -m aituber run` も同等です。
+
+**Windows の注意:** 通常の `stop` は終了ファイル（`shutdown_request.txt`）とアプリ側のポーリングに依存します。確実にプロセスを止めたいときは `aituber stop --force` を使ってください。
+
+### シェルスクリプト（従来どおり）
+
+CLI と同じ役割のラッパーです。好みやスクリプト連携用に残しています。
+
+#### Windows
 
 1. PowerShellを管理者として実行し、以下のコマンドで実行ポリシーを設定（初回のみ）：
 ```powershell
@@ -87,7 +110,7 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
 .\stop_monologue.ps1
 ```
 
-### Mac/Linux環境
+#### Mac/Linux
 
 1. 起動：
 ```bash
@@ -133,7 +156,8 @@ Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
    - 管理者権限で実行が必要な場合あり
 
 2. プロセス終了エラー：
-   - タスクマネージャーからpythonプロセスを手動で終了
+   - `poetry run aituber stop --force` で強制終了を試す
+   - それでもダメな場合はタスクマネージャーから `python` プロセスを手動で終了
 
 ### Mac/Linux固有の問題
 

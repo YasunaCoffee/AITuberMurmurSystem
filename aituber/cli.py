@@ -3,7 +3,11 @@ AITuber コマンドライン（サブコマンド）。
 
 使用例:
   poetry run aituber run
+  poetry run aituber run --detach
   poetry run aituber run --character characters/hayate.yaml
+  poetry run aituber stop
+  poetry run aituber stop --force
+  poetry run aituber status
   poetry run aituber shutdown
   poetry run aituber character info
   poetry run aituber character validate characters/hayate.yaml
@@ -12,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -34,16 +39,103 @@ def _cmd_run(args: argparse.Namespace) -> None:
         argv.extend(["--theme", args.theme])
     if args.character:
         argv.extend(["--character", args.character])
+
+    if args.detach:
+        repo = _repo_root()
+        log_path = repo / (args.log_file or "monologue.log")
+        cmd = [sys.executable, "-m", "aituber", "run"] + argv
+        logf = open(log_path, "ab")
+        popen_kw: dict = {
+            "args": cmd,
+            "cwd": str(repo),
+            "stdout": logf,
+            "stderr": subprocess.STDOUT,
+        }
+        if sys.platform == "win32":
+            popen_kw["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        else:
+            popen_kw["start_new_session"] = True
+        subprocess.Popen(**popen_kw)
+        print(f"バックグラウンドで起動しました。ログ: {log_path}")
+        return
+
     from main import main as app_main
 
     app_main(argv=argv)
 
 
-def _cmd_shutdown(_args: argparse.Namespace) -> None:
-    path = str(_repo_root() / "shutdown_request.txt")
-    with open(path, "w", encoding="utf-8") as f:
-        f.write("shutdown requested by aituber CLI\n")
+def _cmd_stop(args: argparse.Namespace) -> None:
+    from aituber.ops import (
+        find_app_processes,
+        kill_process,
+        signal_interrupt,
+        write_shutdown_request_file,
+        describe_process,
+    )
+
+    repo = _repo_root()
+    procs = find_app_processes()
+    if not procs:
+        print("実行中の AITuber 本体プロセスは見つかりませんでした。")
+        return
+
+    path = write_shutdown_request_file(repo)
     print(f"終了リクエストを書き込みました: {path}")
+    for p in procs:
+        print(f"  {describe_process(p)}")
+
+    if args.force:
+        pids = [p.pid for p in procs]
+        for pid in pids:
+            kill_process(pid)
+        print("強制終了（kill）を実行しました。")
+        return
+
+    n = 0
+    for p in procs:
+        if signal_interrupt(p.pid):
+            n += 1
+    if sys.platform != "win32" and n:
+        print(f"SIGINT を {n} 件送信しました（終了処理はアプリ側に委ねます）。")
+    elif sys.platform == "win32":
+        print("Windows では終了ファイルとアプリのポーリングに依存します（従来の stop_monologue.ps1 と同様）。")
+
+
+def _cmd_shutdown(_args: argparse.Namespace) -> None:
+    """互換用: stop と同じ（強制なし）。"""
+    _cmd_stop(argparse.Namespace(force=False))
+
+
+def _cmd_status(_args: argparse.Namespace) -> None:
+    from aituber.ops import find_app_processes, describe_process
+
+    repo = _repo_root()
+    procs = find_app_processes()
+    if not procs:
+        print("ステータス: 停止中（本体プロセスなし）")
+    else:
+        print(f"ステータス: 実行中（{len(procs)} プロセス）")
+        for p in procs:
+            print(f"  {describe_process(p)}")
+
+    log_path = repo / "monologue.log"
+    print("")
+    if log_path.is_file():
+        size = log_path.stat().st_size
+        try:
+            text = log_path.read_text(encoding="utf-8", errors="replace")
+            lines = text.splitlines()
+            n = len(lines)
+        except OSError:
+            n = -1
+            lines = []
+        print(f"ログ: {log_path}（約 {size} bytes, {n if n >= 0 else '?'} 行）")
+        if lines:
+            print("--- 末尾 5 行 ---")
+            for line in lines[-5:]:
+                print(line)
+    else:
+        print(f"ログ: {log_path} はまだありません")
 
 
 def _cmd_character_info(args: argparse.Namespace) -> None:
@@ -93,13 +185,40 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="YAML",
         help="キャラクター定義 YAML（省略時は config.yaml の character.yaml_path）",
     )
+    p_run.add_argument(
+        "--detach",
+        action="store_true",
+        help="バックグラウンド起動（ログは --log-file、既定 monologue.log）",
+    )
+    p_run.add_argument(
+        "--log-file",
+        type=str,
+        default="monologue.log",
+        metavar="PATH",
+        help="--detach 時のログ相対パス（プロジェクトルート基準）",
+    )
     p_run.set_defaults(func=_cmd_run)
+
+    p_stop = sub.add_parser(
+        "stop",
+        help="終了: shutdown_request.txt を作成し、可能なら SIGINT。--force で強制 kill",
+    )
+    p_stop.add_argument(
+        "--force",
+        "-f",
+        action="store_true",
+        help="本体プロセスを強制終了（kill）",
+    )
+    p_stop.set_defaults(func=_cmd_stop)
 
     p_sd = sub.add_parser(
         "shutdown",
-        help="グレースフル終了のリクエスト（shutdown_request.txt をプロジェクトルートに作成）",
+        help="(互換) stop と同じ（終了ファイルのみ・強制なし）",
     )
     p_sd.set_defaults(func=_cmd_shutdown)
+
+    p_st = sub.add_parser("status", help="本体プロセスと monologue.log の要約")
+    p_st.set_defaults(func=_cmd_status)
 
     p_char = sub.add_parser("character", help="キャラクター定義の確認・検証")
     char_sub = p_char.add_subparsers(dest="char_cmd", required=True)
