@@ -16,6 +16,12 @@ if TYPE_CHECKING:
 _character: Optional["Character"] = None
 
 
+def reset_character_runtime() -> None:
+    """テスト用: 読み込み済みキャラをクリアする（次の get_character で再 init）。"""
+    global _character
+    _character = None
+
+
 def resolve_character_path(relative: str) -> str:
     """Character YAML 内のパス（プロジェクトルート相対）を絶対パスにする。"""
     rel = relative.replace("\\", "/").lstrip("/")

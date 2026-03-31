@@ -5,6 +5,7 @@ from .character_runtime import (
     get_history_log_path,
     get_monologue_basename,
     init_character,
+    reset_character_runtime,
     resolve_character_path,
 )
 
@@ -13,5 +14,6 @@ __all__ = [
     "get_history_log_path",
     "get_monologue_basename",
     "init_character",
+    "reset_character_runtime",
     "resolve_character_path",
 ]
