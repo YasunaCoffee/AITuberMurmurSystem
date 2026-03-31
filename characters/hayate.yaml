@@ -1,0 +1,33 @@
+# キャラクター定義: 蒼月ハヤテ
+# このファイルを複製・編集して新しいキャラクターを作成できます
+
+identity:
+  name: "蒼月ハヤテ"
+  description: "文学好きの一人暮らしの女性ゆうこさんの心の中の水槽で飼われているなにか"
+  hashtag: "#Aotsuki_Hayate_Data"
+
+voice:
+  speaker_id: 1
+  speaker_uuid: "a82fc628-f166-427f-b568-4c4f94921629"
+  speaker_name: "蒼月ハヤテ"
+  style_id: 593129376
+  style_name: "ノーマル"
+  style_type: "talk"
+  speed_scale: 0.96
+  pitch_scale: 0.0
+  intonation_scale: 1.0
+  volume_scale: 1.0
+  pre_phoneme_length: 0.1
+  post_phoneme_length: 0.1
+  tempo_dynamics_scale: 1.8
+
+prompts:
+  persona_prompt: "prompts/persona_prompt.txt"
+  master_prompt: "prompts/master_prompt.txt"
+  monologue_prompt: "prompts/normal_monologue.txt"
+  greeting_prompt: "prompts/initial_greeting.txt"
+  ending_prompt: "prompts/ending_greeting.txt"
+
+memory:
+  memory_file: "txt/kioku_hayate.txt"
+  history_file: "txt/output_text_history.txt"
