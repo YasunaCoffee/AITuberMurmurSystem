@@ -241,7 +241,9 @@ memory:
 """
 
     def _write_yaml(self, content: str) -> str:
-        f = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
+        f = tempfile.NamedTemporaryFile(
+            mode="w", suffix=".yaml", delete=False, encoding="utf-8"
+        )
         f.write(content)
         f.close()
         return f.name
