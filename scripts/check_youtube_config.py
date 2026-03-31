@@ -9,13 +9,17 @@ import re
 from dotenv import load_dotenv
 from pathlib import Path
 
+# リポジトリルート（本スクリプトは scripts/ にある）
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
 def check_youtube_config():
     """YouTube設定の確認と診断"""
     print("=== YouTubeビデオID設定確認 ===")
     print()
     
     # 1. .envファイルの存在確認
-    env_file = Path('.env')
+    env_file = REPO_ROOT / ".env"
     if not env_file.exists():
         print("❌ .envファイルが見つかりません")
         print("   解決方法: .env.templateをコピーして.envファイルを作成してください")
@@ -25,7 +29,7 @@ def check_youtube_config():
         print("✅ .envファイルが存在します")
     
     # 2. 環境変数の読み込み
-    load_dotenv()
+    load_dotenv(REPO_ROOT / ".env")
     
     # 3. YOUTUBE_VIDEO_IDの確認
     video_id = os.getenv('YOUTUBE_VIDEO_ID')
@@ -142,7 +146,7 @@ def interactive_setup():
 
 def update_env_file(key, value):
     """環境変数ファイルを更新"""
-    env_file = Path('.env')
+    env_file = REPO_ROOT / ".env"
     
     if env_file.exists():
         # 既存の.envファイルを読み込み
@@ -175,19 +179,19 @@ def show_usage_examples():
     print()
     
     print("1. 基本的な接続テスト:")
-    print("   python test_youtube_live_simple.py")
+    print("   poetry run python murmur/tests/test_youtube_live_simple.py")
     print()
     
-    print("2. v2システム統合テスト:")
+    print("2. 統合テスト:")
     print("   cd murmur && python run_integrated_test.py")
     print()
     
     print("3. コメントフィルターテスト:")
-    print("   python test_comment_filter.py")
+    print("   poetry run pytest murmur/tests/test_comment_filter.py -q")
     print()
     
     print("4. システム全体の実行:")
-    print("   python main_v2.py")
+    print("   poetry run python main.py")
 
 def main():
     """メイン実行関数"""

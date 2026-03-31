@@ -21,9 +21,9 @@ import pytz
 from murmur.handlers.daily_summary_handler import DailySummaryHandler
 from murmur.core.events import StreamEnded, DailySummaryReady
 from murmur.core.event_queue import EventQueue
-from memory_manager import MemoryManager
+from app.memory_manager import MemoryManager
 from config import config
-from openai_adapter import OpenAIAdapter
+from app.openai_adapter import OpenAIAdapter
 from murmur.core.events import PrepareDailySummary
 
 class TestDailySummaryHandler(unittest.TestCase):

@@ -12,6 +12,18 @@ AITuberのための自動配信システム。テーマに基づいて自動的�
 - AivisSpeechを使用した音声合成（ボイスモデル: 蒼月ハヤテ）
 - 配信サマリーの自動生成
 
+## ソース構成（概要）
+
+| 場所 | 内容 |
+|------|------|
+| `murmur/` | 本番アプリ（コントローラ・ハンドラ・サービス） |
+| `app/` | OpenAI・Aivis・記憶・会話履歴など共通モジュール |
+| `aituber/` | `poetry run aituber` 用 CLI |
+| `scripts/` | ユーティリティ（例: `scripts/check_youtube_config.py`） |
+| `main.py` / `config.py` | 起動エントリと設定ローダ（ルートに配置） |
+
+詳細は `doc/package_layout.md` を参照。
+
 ## セットアップ
 
 ### 必要なソフトウェア

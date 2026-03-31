@@ -14,7 +14,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from murmur.core.event_queue import EventQueue
 from murmur.handlers.daily_summary_handler import DailySummaryHandler
 from murmur.core.events import StreamEnded, DailySummaryReady
-from memory_manager import MemoryManager
+from app.memory_manager import MemoryManager
 
 print("=== 配信終了後サマリー生成テスト ===")
 
@@ -26,7 +26,7 @@ def test_post_stream_summary():
     
     # MemoryManagerを初期化（サマリー生成に必要）
     try:
-        from openai_adapter import OpenAIAdapter
+        from app.openai_adapter import OpenAIAdapter
         system_prompt = "システムプロンプト"
         openai_adapter = OpenAIAdapter(system_prompt, silent_mode=True)
         memory_manager = MemoryManager(openai_adapter)

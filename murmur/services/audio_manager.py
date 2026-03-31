@@ -16,7 +16,7 @@ except ImportError:
 
 from murmur.core.event_queue import EventQueue
 from murmur.core.events import PlaySpeech, SpeechPlaybackCompleted
-from aivis_speech_adapter import AivisSpeechAdapter
+from app.aivis_speech_adapter import AivisSpeechAdapter
 import os
 import datetime
 

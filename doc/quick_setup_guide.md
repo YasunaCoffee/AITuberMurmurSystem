@@ -17,7 +17,7 @@
 #### 方法A: 自動設定（推奨）
 ```bash
 # 設定確認スクリプトを実行
-python check_youtube_config.py
+python scripts/check_youtube_config.py
 
 # 画面の指示に従ってURLを入力
 ```
@@ -80,7 +80,7 @@ python main_v2.py
 ```
 monologue/
 ├── .env                           # ← メイン設定ファイル
-├── check_youtube_config.py        # ← 設定確認スクリプト
+├── scripts/check_youtube_config.py  # ← 設定確認スクリプト
 ├── test_youtube_live_simple.py    # ← 接続テストスクリプト
 └── murmur/
     ├── config/
@@ -132,7 +132,7 @@ OBS_WS_PORT=4455
 
 1. **設定確認**
    ```bash
-   python check_youtube_config.py
+   python scripts/check_youtube_config.py
    ```
 
 2. **接続テスト**
@@ -181,7 +181,7 @@ OBS_WS_PORT=4455
 
 ```bash
 # 設定変更後
-python check_youtube_config.py  # 設定確認
+python scripts/check_youtube_config.py  # 設定確認
 python test_youtube_live_simple.py  # 接続テスト
 ```
 
@@ -200,7 +200,7 @@ YOUTUBE_VIDEO_ID=VIDEO_ID_2
 - [ ] `.env`ファイルが存在する
 - [ ] `YOUTUBE_VIDEO_ID`が設定されている
 - [ ] `OPENAI_API_KEY`が設定されている
-- [ ] `python check_youtube_config.py`が成功する
+- [ ] `python scripts/check_youtube_config.py`が成功する
 - [ ] `python test_youtube_live_simple.py`が成功する
 - [ ] `cd murmur && python run_integrated_test.py`が成功する
 
@@ -216,4 +216,4 @@ YOUTUBE_VIDEO_ID=VIDEO_ID_2
 
 ---
 
-**サポート**: 問題が発生した場合は`python check_youtube_config.py`を実行して診断してください。
+**サポート**: 問題が発生した場合は`python scripts/check_youtube_config.py`を実行して診断してください。

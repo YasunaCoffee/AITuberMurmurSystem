@@ -33,3 +33,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# 実行時に生成されるサマリー出力
+summary/
