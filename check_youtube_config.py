@@ -179,7 +179,7 @@ def show_usage_examples():
     print()
     
     print("2. v2システム統合テスト:")
-    print("   cd v2 && python run_integrated_test.py")
+    print("   cd murmur && python run_integrated_test.py")
     print()
     
     print("3. コメントフィルターテスト:")

@@ -1,6 +1,6 @@
 import os
-from v2.core.event_queue import EventQueue
-from v2.core.events import (
+from murmur.core.event_queue import EventQueue
+from murmur.core.events import (
     AppStarted,
     Command,
     PlaySpeech,
@@ -10,14 +10,14 @@ from v2.core.events import (
     PrepareEndingGreeting,
     PrepareDailySummary,
 )
-from v2.state.state_manager import StateManager
-from v2.controllers.main_controller import MainController
-from v2.services.audio_manager import AudioManager
-from v2.services.integrated_comment_manager import IntegratedCommentManager
-from v2.handlers.monologue_handler import MonologueHandler
-from v2.handlers.comment_handler import CommentHandler
-from v2.handlers.greeting_handler import GreetingHandler
-from v2.handlers.daily_summary_handler import DailySummaryHandler
+from murmur.state.state_manager import StateManager
+from murmur.controllers.main_controller import MainController
+from murmur.services.audio_manager import AudioManager
+from murmur.services.integrated_comment_manager import IntegratedCommentManager
+from murmur.handlers.monologue_handler import MonologueHandler
+from murmur.handlers.comment_handler import CommentHandler
+from murmur.handlers.greeting_handler import GreetingHandler
+from murmur.handlers.daily_summary_handler import DailySummaryHandler
 import queue
 import signal
 import argparse
@@ -32,7 +32,7 @@ def log_message(message):
     print(formatted_message)
     
     try:
-        from v2.runtime.character_runtime import get_history_log_path
+        from murmur.runtime.character_runtime import get_history_log_path
         path = get_history_log_path()
         d = os.path.dirname(path)
         if d:
@@ -66,7 +66,7 @@ def main(argv=None):
     # 渡された引数リスト（argv）をパースする。Noneの場合はsys.argv[1:]が使われる。
     args = parser.parse_args(argv)
 
-    from v2.runtime.character_runtime import init_character
+    from murmur.runtime.character_runtime import init_character
     init_character(args.character)
     
     log_message("Starting AITuberぶつぶつシステム v2... (Production Mode)")
@@ -310,7 +310,7 @@ def _handle_empty_queue_filler(main_controller, audio_manager):
             log_message(f"[Main] Playing filler phrase: {selected_phrase}")
             
             # 音声再生
-            from v2.core.events import PlaySpeech
+            from murmur.core.events import PlaySpeech
             import uuid
             
             play_speech_event = PlaySpeech(
@@ -334,7 +334,7 @@ def _handle_empty_queue_filler(main_controller, audio_manager):
     
 def _is_filler_event(item):
     """アイテムがフィラーフレーズ関連のイベントかどうかを判定"""
-    from v2.core.events import PlaySpeech
+    from murmur.core.events import PlaySpeech
     if isinstance(item, PlaySpeech):
         # task_idに基づいてフィラーフレーズかどうかを判定
         # フィラーフレーズのsentencesを確認
@@ -426,8 +426,8 @@ def _generate_ending_comment(
 ):
     """終了時の振り返りコメントを生成（メインループ外から呼び出し可能）"""
     try:
-        from v2.core.events import PlaySpeech
-        from v2.core.test_mode import test_mode_manager
+        from murmur.core.events import PlaySpeech
+        from murmur.core.test_mode import test_mode_manager
         import uuid
 
         # 1. 要約テキストの生成
@@ -453,7 +453,7 @@ def _generate_ending_comment(
         bridge_text = "それでは、本日の詩的言語探索はここまでとしましょう。"
 
         # 2. 終了挨拶プロンプトの構築とLLM呼び出し
-        from v2.runtime.character_runtime import get_character, resolve_character_path
+        from murmur.runtime.character_runtime import get_character, resolve_character_path
         from config import config as app_config
         _p = get_character().prompts
         _end = (

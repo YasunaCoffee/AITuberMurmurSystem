@@ -10,7 +10,7 @@ from config import config
 
 # テストモード管理のインポート
 try:
-    from v2.core.test_mode import test_mode_manager, TestMode, TestConfig, DummyDataGenerator
+    from murmur.core.test_mode import test_mode_manager, TestMode, TestConfig, DummyDataGenerator
     TEST_MODE_AVAILABLE = True
 except ImportError:
     TEST_MODE_AVAILABLE = False

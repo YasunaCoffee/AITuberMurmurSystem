@@ -204,7 +204,7 @@ class MemoryManager:
 
         # 完了イベントを発行
         if self.event_queue:
-            from v2.core.events import DailySummaryReady
+            from murmur.core.events import DailySummaryReady
             event = DailySummaryReady(
                 task_id=task_id,
                 summary_text=summary_text,

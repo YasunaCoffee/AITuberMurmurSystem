@@ -44,10 +44,10 @@ class AivisSpeechAdapter:
         AivisSpeechエンジン用の設定に更新
 
         Args:
-            voice_config: VoiceConfig。省略時は v2 のキャラクターYAMLから取得。
+            voice_config: VoiceConfig。省略時は murmur のキャラクター定義から取得。
         """
         if voice_config is None:
-            from v2.runtime.character_runtime import get_character
+            from murmur.runtime.character_runtime import get_character
             voice_config = get_character().voice
         self.character_configs = {
             "current": voice_config_to_dict(voice_config),

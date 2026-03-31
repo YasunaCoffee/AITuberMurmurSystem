@@ -10,7 +10,7 @@
 - **起動フロー**: `start_monologue.sh` → `main.py`
 
 ## 更新履歴
-- **2025-07-31**: 挨拶後のコメント処理とテーマ朗読開始ロジックに関する大規模なデバッグと安定化を実施。`v2/controllers/main_controller.py`のロジックを大幅に改善し、関連するテストケースを`v2/tests/controllers/test_main_controller.py`に多数追加。ファイル依存関係自体に変更はないが、システムの安定性が大幅に向上。
+- **2025-07-31**: 挨拶後のコメント処理とテーマ朗読開始ロジックに関する大規模なデバッグと安定化を実施。`murmur/controllers/main_controller.py`のロジックを大幅に改善し、関連するテストケースを`murmur/tests/controllers/test_main_controller.py`に多数追加。ファイル依存関係自体に変更はないが、システムの安定性が大幅に向上。
 - **2025-07-26**: 初回分析を実施。
 
 ---
@@ -40,7 +40,7 @@ aivis_speech_adapter.py     # 音声合成
 
 #### コア機能
 ```
-v2/core/
+murmur/core/
 ├── event_queue.py          # イベントキューシステム
 ├── events.py               # イベント定義
 ├── logger.py               # ログシステム
@@ -50,13 +50,13 @@ v2/core/
 
 #### コントローラー
 ```
-v2/controllers/
+murmur/controllers/
 └── main_controller.py      # メインコントローラー
 ```
 
 #### ハンドラー
 ```
-v2/handlers/
+murmur/handlers/
 ├── monologue_handler.py         # 独り言処理
 ├── comment_handler.py           # コメント処理
 ├── greeting_handler.py          # 挨拶処理
@@ -67,7 +67,7 @@ v2/handlers/
 
 #### サービス
 ```
-v2/services/
+murmur/services/
 ├── audio_manager.py             # 音声管理
 ├── integrated_comment_manager.py # 統合コメント管理
 └── prompt_manager.py            # プロンプト管理
@@ -75,13 +75,13 @@ v2/services/
 
 #### 状態管理
 ```
-v2/state/
+murmur/state/
 └── state_manager.py        # 状態管理
 ```
 
 #### ユーティリティ
 ```
-v2/utils/
+murmur/utils/
 └── comment_filter.py       # コメントフィルター
 ```
 
@@ -110,7 +110,7 @@ prompts/
 
 ### 設定・データディレクトリ
 ```
-v2/config/
+murmur/config/
 └── comment_filter.json     # コメントフィルター設定
 
 conversation_history/       # 会話履歴保存ディレクトリ（空でも必要）
@@ -127,7 +127,7 @@ txt/
 
 ### テスト・開発専用ファイル（29ファイル）
 ```
-v2/tests/                   # テストディレクトリ全体
+murmur/tests/                   # テストディレクトリ全体
 ├── controllers/
 │   └── test_main_controller.py
 ├── handlers/
@@ -138,7 +138,7 @@ v2/tests/                   # テストディレクトリ全体
 ├── test_*.py              # 各種テストファイル（22ファイル）
 └── ...
 
-v2/run_integrated_test.py   # 統合テスト実行スクリプト
+murmur/run_integrated_test.py   # 統合テスト実行スクリプト
 ```
 
 ### デバッグ・チェック用スクリプト
@@ -226,7 +226,7 @@ stop_monologue.sh          # 停止スクリプト（保持推奨）
 ## 🎯 推奨アクション
 
 ### 即座に削除可能
-- `v2/tests/` ディレクトリ全体
+- `murmur/tests/` ディレクトリ全体
 - `doc/` および `dev_log/` ディレクトリ（このファイル以外）
 - `debug_*.py` ファイル群
 - 未使用プロンプトファイル

@@ -60,7 +60,7 @@ python test_youtube_live_simple.py
 
 ```bash
 # v2システム全体テスト
-cd v2 && python run_integrated_test.py
+cd murmur && python run_integrated_test.py
 
 # または実際のシステム起動
 python main_v2.py
@@ -73,7 +73,7 @@ python main_v2.py
 | ファイル | 役割 | 設定項目 |
 |---------|------|----------|
 | `.env` | 環境変数 | `YOUTUBE_VIDEO_ID`, `CHAT_TEST_MODE` |
-| `v2/config/comment_filter.json` | コメントフィルター | NGワード、ユーザーブロック |
+| `murmur/config/comment_filter.json` | コメントフィルター | NGワード、ユーザーブロック |
 
 ### 設定の階層構造
 
@@ -82,7 +82,7 @@ monologue/
 ├── .env                           # ← メイン設定ファイル
 ├── check_youtube_config.py        # ← 設定確認スクリプト
 ├── test_youtube_live_simple.py    # ← 接続テストスクリプト
-└── v2/
+└── murmur/
     ├── config/
     │   └── comment_filter.json    # ← フィルター設定
     ├── services/
@@ -143,7 +143,7 @@ OBS_WS_PORT=4455
 3. **ログ確認**
    ```bash
    # システム実行時のログを確認
-   cd v2 && python run_integrated_test.py
+   cd murmur && python run_integrated_test.py
    ```
 
 ## 🎯 ビデオID取得方法の詳細
@@ -202,7 +202,7 @@ YOUTUBE_VIDEO_ID=VIDEO_ID_2
 - [ ] `OPENAI_API_KEY`が設定されている
 - [ ] `python check_youtube_config.py`が成功する
 - [ ] `python test_youtube_live_simple.py`が成功する
-- [ ] `cd v2 && python run_integrated_test.py`が成功する
+- [ ] `cd murmur && python run_integrated_test.py`が成功する
 
 ## 🎉 完了！
 
@@ -210,7 +210,7 @@ YOUTUBE_VIDEO_ID=VIDEO_ID_2
 
 ### 次のステップ
 
-- **コメントフィルター設定**: `v2/config/comment_filter.json`を編集
+- **コメントフィルター設定**: `murmur/config/comment_filter.json`を編集
 - **プロンプト調整**: `prompts/`フォルダのテキストファイルを編集
 - **システム監視**: メトリクス機能でパフォーマンスを確認
 
