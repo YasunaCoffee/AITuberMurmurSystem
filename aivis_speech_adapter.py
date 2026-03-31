@@ -3,10 +3,32 @@ import requests
 import io
 import soundfile
 import numpy as np
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Any, Dict
 import time
 from requests.exceptions import RequestException, ConnectionError, Timeout
 from config import config
+
+
+def voice_config_to_dict(voice) -> Dict[str, Any]:
+    """VoiceConfig dataclass を Aivis 用の辞書に変換する。"""
+    return {
+        "speaker_id": voice.speaker_id,
+        "speaker_uuid": voice.speaker_uuid,
+        "speaker_name": voice.speaker_name,
+        "style_id": voice.style_id,
+        "style_name": voice.style_name,
+        "style_type": voice.style_type,
+        "speed_scale": voice.speed_scale,
+        "pitch_scale": voice.pitch_scale,
+        "intonation_scale": voice.intonation_scale,
+        "volume_scale": voice.volume_scale,
+        "pre_phoneme_length": voice.pre_phoneme_length,
+        "post_phoneme_length": voice.post_phoneme_length,
+        "output_sampling_rate": config.audio.synthesis.output_sampling_rate,
+        "output_stereo": config.audio.synthesis.output_stereo,
+        "tempo_dynamics_scale": voice.tempo_dynamics_scale,
+    }
+
 
 class AivisSpeechAdapter:
     """
@@ -16,41 +38,22 @@ class AivisSpeechAdapter:
     
     # API リクエストの設定（config.yamlから取得）
 
-    def __init__(self):
+    def __init__(self, voice_config=None):
         """
         キャラクター設定の初期化
         AivisSpeechエンジン用の設定に更新
+
+        Args:
+            voice_config: VoiceConfig。省略時は v2 のキャラクターYAMLから取得。
         """
-        self.character_configs = self._initialize_character_configs()
+        if voice_config is None:
+            from v2.runtime.character_runtime import get_character
+            voice_config = get_character().voice
+        self.character_configs = {
+            "current": voice_config_to_dict(voice_config),
+        }
         self._test_connection()
         self._validate_speaker_config()
-
-    def _initialize_character_configs(self) -> dict:
-        """
-        キャラクター設定の初期化
-        
-        Returns:
-            dict: キャラクター設定辞書
-        """
-        return {
-            'hayate': {
-                'speaker_id': 1,  # 蒼月ハヤテを話者1として設定
-                'speaker_uuid': 'a82fc628-f166-427f-b568-4c4f94921629',
-                'speaker_name': '蒼月ハヤテ',
-                'style_id': 593129376,  # ハヤテのスタイルID（ノーマル）
-                'style_name': 'ノーマル',
-                'style_type': 'talk',
-                'speed_scale': 0.96,  # 標準速度
-                'pitch_scale': 0.0,  # 標準ピッチ
-                'intonation_scale': 1.0,  # 標準抑揚
-                'volume_scale': 1.0,  # 標準音量
-                'pre_phoneme_length': 0.1,  # 前音素長
-                'post_phoneme_length': 0.1,  # 後音素長
-                'output_sampling_rate': config.audio.synthesis.output_sampling_rate,
-                'output_stereo': config.audio.synthesis.output_stereo,
-                'tempo_dynamics_scale': 1.8  # テンポの緩急を制御するパラメーター（デフォルト: 1.0）
-            }
-        }
 
     def _test_connection(self):
         """
@@ -74,8 +77,8 @@ class AivisSpeechAdapter:
             speakers = response.json()
             
             # 話者の存在確認
-            hayate_config = self.character_configs['hayate']
-            self._verify_speaker_exists(speakers, hayate_config)
+            current_config = self.character_configs["current"]
+            self._verify_speaker_exists(speakers, current_config)
             
         except Exception as e:
             print(f"警告: 話者設定の検証に失敗しました: {str(e)}")

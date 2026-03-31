@@ -21,6 +21,7 @@ from openai_adapter import OpenAIAdapter
 from conversation_history import ConversationHistory
 from memory_manager import MemoryManager
 from config import config
+from v2.runtime.character_runtime import get_character, resolve_character_path, get_monologue_basename
 
 
 class CommentHandler:
@@ -46,7 +47,7 @@ class CommentHandler:
             
             # プロンプト管理の初期化
             print("[CommentHandler] 🔍 Initializing PromptManager...")
-            self.prompt_manager = PromptManager()
+            self.prompt_manager = PromptManager(monologue_primary=get_monologue_basename())
             print("[CommentHandler] ✅ PromptManager initialized")
             
             # コメントフィルターの初期化
@@ -57,7 +58,7 @@ class CommentHandler:
             
             # OpenAIアダプターの初期化
             print("[CommentHandler] 🔍 Initializing OpenAIAdapter...")
-            system_prompt_path = os.path.join(config.paths.prompts, "persona_prompt.txt")
+            system_prompt_path = resolve_character_path(get_character().prompts.persona_prompt)
             with open(system_prompt_path, "r", encoding="utf-8") as f:
                 system_prompt = f.read()
             self.openai_adapter = OpenAIAdapter(system_prompt, silent_mode=False)
@@ -70,6 +71,9 @@ class CommentHandler:
             
             print("[CommentHandler] 🔍 Initializing MemoryManager...")
             self.memory_manager = MemoryManager(self.openai_adapter)
+            self.memory_manager.set_auto_save_path(
+                resolve_character_path(get_character().memory.memory_file)
+            )
             print("[CommentHandler] ✅ MemoryManager initialized")
             
             print("[CommentHandler] ✅ All components initialized successfully")

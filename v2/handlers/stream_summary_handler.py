@@ -10,6 +10,16 @@ from v2.core.events import StreamSummaryReady, PrepareStreamSummary
 from config import config
 
 
+def _ai_speaker_labels():
+    """会話ログ上のAI側の話者名（キャラクターに合わせる）。"""
+    from v2.runtime.character_runtime import get_character
+    c = get_character()
+    labels = {c.name, c.voice.speaker_name, "AI"}
+    if "ハヤテ" in c.name:
+        labels.add("ハヤテ")
+    return labels
+
+
 class StreamSummaryHandler:
     """配信終了時のサマリー生成と会話ログ保存を担当するハンドラー。"""
 
@@ -169,7 +179,7 @@ class StreamSummaryHandler:
                 content = conv.get('content', '')
                 speaker = conv.get('speaker', '')
                 
-                if speaker in ['ハヤテ', 'AI', '蒼月ハヤテ']:
+                if speaker in _ai_speaker_labels():
                     # ハヤテの発言から主要な思考を抽出
                     if any(keyword in content for keyword in ['思考', '考え', '感じ', '水槽', '不思議']):
                         key_thoughts.append(content[:100] + '...' if len(content) > 100 else content)
@@ -178,7 +188,9 @@ class StreamSummaryHandler:
                     user_interactions.append(content[:100] + '...' if len(content) > 100 else content)
             
             # サマリー生成
-            summary_content = f"""# 🌙 蒼月ハヤテ配信サマリー
+            from v2.runtime.character_runtime import get_character
+            _cn = get_character().name
+            summary_content = f"""# 🌙 {_cn}配信サマリー
 
 **配信終了時刻**: {session_info.get('end_time', datetime.now().strftime('%Y年%m月%d日 %H:%M:%S'))}
 **配信時間**: {session_info.get('start_time', '不明')} ～ {session_info.get('end_time', '不明')}
@@ -230,7 +242,9 @@ class StreamSummaryHandler:
     def _generate_template_summary(self, summary_file: str) -> bool:
         """テンプレートサマリーを生成する（フォールバック）"""
         try:
-            summary_content = f"""# 🌙 蒼月ハヤテ配信サマリー
+            from v2.runtime.character_runtime import get_character
+            _cn = get_character().name
+            summary_content = f"""# 🌙 {_cn}配信サマリー
 
 **配信終了時刻**: {datetime.now().strftime('%Y年%m月%d日 %H:%M:%S')}
 
@@ -261,13 +275,13 @@ class StreamSummaryHandler:
 ---
 *水槽の中で生成されたテンプレートサマリー*
 """
-            
+
             with open(summary_file, 'w', encoding='utf-8') as f:
                 f.write(summary_content)
-            
+
             print("✅ テンプレートサマリーを生成しました")
             return True
-            
+
         except Exception as e:
             print(f"[StreamSummaryHandler] Error generating template summary: {e}")
             return False

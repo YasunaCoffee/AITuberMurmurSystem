@@ -11,6 +11,7 @@ from openai_adapter import OpenAIAdapter
 from conversation_history import ConversationHistory
 from memory_manager import MemoryManager
 from config import config
+from v2.runtime.character_runtime import get_character, resolve_character_path, get_monologue_basename
 
 
 class MonologueHandler:
@@ -28,10 +29,10 @@ class MonologueHandler:
         # v1のコンポーネントを初期化
         try:
             # プロンプト管理の初期化
-            self.prompt_manager = PromptManager()
+            self.prompt_manager = PromptManager(monologue_primary=get_monologue_basename())
             
             # OpenAIアダプターの初期化
-            system_prompt_path = os.path.join(config.paths.prompts, "persona_prompt.txt")
+            system_prompt_path = resolve_character_path(get_character().prompts.persona_prompt)
             with open(system_prompt_path, "r", encoding="utf-8") as f:
                 system_prompt = f.read()
             self.openai_adapter = OpenAIAdapter(system_prompt, silent_mode=False)
@@ -42,6 +43,10 @@ class MonologueHandler:
                 llm_adapter=self.openai_adapter, 
                 event_queue=self.event_queue
             )
+            _mem = resolve_character_path(get_character().memory.memory_file)
+            self.memory_manager.set_auto_save_path(_mem)
+            if os.path.isfile(_mem):
+                self.memory_manager.load_summary_from_file(_mem)
             
             print("[MonologueHandler] Initialized successfully with OpenAI adapter and PromptManager")
         except Exception as e:
@@ -312,7 +317,7 @@ class MonologueHandler:
             # add_utteranceメソッドを使用してシステム発話として記録
             self.memory_manager.add_utterance(
                 text=monologue_text,
-                speaker="蒼月ハヤテ"
+                speaker=get_character().name,
             )
             
             print(f"[MonologueHandler] Saved monologue to memory: {monologue_text[:50]}...")

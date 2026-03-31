@@ -25,18 +25,22 @@ import datetime
 
 
 def log_message(message):
-    """コンソールと txt/output_text_history.txt の両方にログを出力"""
+    """コンソールとキャラクター設定の発言履歴ファイルの両方にログを出力"""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     formatted_message = f"[{timestamp}] {message}"
     
     print(formatted_message)
     
     try:
-        os.makedirs("txt", exist_ok=True)
-        with open("txt/output_text_history.txt", "a", encoding="utf-8") as f:
+        from v2.runtime.character_runtime import get_history_log_path
+        path = get_history_log_path()
+        d = os.path.dirname(path)
+        if d:
+            os.makedirs(d, exist_ok=True)
+        with open(path, "a", encoding="utf-8") as f:
             f.write(formatted_message + "\n")
     except Exception as e:
-        print(f"[LOG ERROR] Could not write to output_text_history.txt: {e}")
+        print(f"[LOG ERROR] Could not write to history log: {e}")
 
 
 def main(argv=None):
@@ -52,8 +56,18 @@ def main(argv=None):
         type=str,
         help='テーマファイルのパス (例: prompts/my_theme.txt)'
     )
+    parser.add_argument(
+        '--character',
+        type=str,
+        default=None,
+        metavar='YAML',
+        help='キャラクター定義YAML（例: characters/hayate.yaml）。省略時は config.yaml の character.yaml_path',
+    )
     # 渡された引数リスト（argv）をパースする。Noneの場合はsys.argv[1:]が使われる。
     args = parser.parse_args(argv)
+
+    from v2.runtime.character_runtime import init_character
+    init_character(args.character)
     
     log_message("Starting AITuberぶつぶつシステム v2... (Production Mode)")
     
@@ -433,11 +447,15 @@ def _generate_ending_comment(
         bridge_text = "それでは、本日の詩的言語探索はここまでとしましょう。"
 
         # 2. 終了挨拶プロンプトの構築とLLM呼び出し
-        with open(
-            'prompts/ending_greeting.txt',
-            'r',
-            encoding='utf-8'
-        ) as f:
+        from v2.runtime.character_runtime import get_character, resolve_character_path
+        from config import config as app_config
+        _p = get_character().prompts
+        _end = (
+            resolve_character_path(_p.ending_prompt)
+            if _p.ending_prompt
+            else os.path.join(app_config.paths.prompts, "ending_greeting.txt")
+        )
+        with open(_end, 'r', encoding='utf-8') as f:
             prompt_template = f.read()
         
         ending_greeting_prompt = prompt_template.format(
