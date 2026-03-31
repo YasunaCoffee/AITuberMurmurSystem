@@ -39,8 +39,8 @@ foreach ($process in $processes) {
     Write-Host "   - PID $($process.Id) (開始時刻: $($process.StartTime))"
 }
 
-# シャットダウンリクエストファイルを作成
-$shutdownFile = "shutdown_request.txt"
+# シャットダウンリクエストファイルを作成（プロジェクトルート = 本スクリプトの場所）
+$shutdownFile = Join-Path $PSScriptRoot "shutdown_request.txt"
 try {
     Set-Content -Path $shutdownFile -Value "$(Get-Date): Graceful shutdown requested" -Encoding UTF8
     Write-Host "✅ シャットダウンリクエストファイルを作成しました: $shutdownFile"

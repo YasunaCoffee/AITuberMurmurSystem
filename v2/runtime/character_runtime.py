@@ -14,12 +14,19 @@ if TYPE_CHECKING:
     from v2.models.character import Character
 
 _character: Optional["Character"] = None
+_loaded_yaml_path: Optional[str] = None
 
 
 def reset_character_runtime() -> None:
     """テスト用: 読み込み済みキャラをクリアする（次の get_character で再 init）。"""
-    global _character
+    global _character, _loaded_yaml_path
     _character = None
+    _loaded_yaml_path = None
+
+
+def get_loaded_character_yaml_path() -> Optional[str]:
+    """最後に init_character で読み込んだ YAML の絶対パス。未初期化なら None。"""
+    return _loaded_yaml_path
 
 
 def resolve_character_path(relative: str) -> str:
@@ -33,7 +40,7 @@ def init_character(yaml_path: Optional[str] = None):
     キャラクター定義を読み込み、以降の get_character() に使う。
     yaml_path が None のときは config.character.yaml_path（config.BASE_DIR 相対）を使う。
     """
-    global _character
+    global _character, _loaded_yaml_path
     from v2.models.character import load_character
 
     if yaml_path:
@@ -53,6 +60,7 @@ def init_character(yaml_path: Optional[str] = None):
     if not os.path.isfile(path):
         raise FileNotFoundError(f"Character YAML not found: {path}")
 
+    _loaded_yaml_path = path
     _character = load_character(path)
     print(f"[Character] Loaded: {_character.name} ({path})")
     return _character

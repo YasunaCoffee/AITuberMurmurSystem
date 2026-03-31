@@ -356,9 +356,15 @@ def _reset_filler_state():
         _handle_empty_queue_filler.filler_played = False
 
 
+def _shutdown_request_path():
+    """CLI・本体で共通の終了リクエストファイル（プロジェクトルート基準）。"""
+    from config import config
+    return os.path.join(config.BASE_DIR, "shutdown_request.txt")
+
+
 def _check_shutdown_request():
     """終了リクエストファイルの存在をチェック"""
-    shutdown_file = "shutdown_request.txt"
+    shutdown_file = _shutdown_request_path()
     if os.path.exists(shutdown_file):
         log_message(f"[Main] DEBUG: Shutdown request file found: {shutdown_file}")
         # ファイルを削除（一回限りのリクエスト）

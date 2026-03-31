@@ -42,9 +42,10 @@ for PID in $PIDS; do
         # 通常モード: 終了挨拶付き
         echo "🎙️  終了の挨拶を開始します..."
         
-        # ファイルベースの終了リクエストを作成
-        echo "graceful_shutdown_request" > shutdown_request.txt
-        echo "📝 終了リクエストファイルを作成しました"
+        # ファイルベースの終了リクエストを作成（プロジェクトルート = 本スクリプトの場所）
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        echo "graceful_shutdown_request" > "$SCRIPT_DIR/shutdown_request.txt"
+        echo "📝 終了リクエストファイルを作成しました ($SCRIPT_DIR/shutdown_request.txt)"
         
         # 念のため、シグナルも送信
         kill -INT $PID 2>/dev/null
