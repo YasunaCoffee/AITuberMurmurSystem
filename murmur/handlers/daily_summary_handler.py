@@ -7,7 +7,7 @@ from typing import Optional
 
 from murmur.core.event_queue import EventQueue
 from murmur.core.events import DailySummaryReady, PrepareDailySummary, StreamEnded
-from memory_manager import MemoryManager
+from app.memory_manager import MemoryManager
 from config import config
 
 

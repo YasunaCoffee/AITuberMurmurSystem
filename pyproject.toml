@@ -50,7 +50,7 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 package-mode = true
-packages = [{include = "aituber"}]
+packages = [{include = "aituber"}, {include = "app"}]
 
 [tool.poetry.scripts]
 aituber = "aituber.cli:main"

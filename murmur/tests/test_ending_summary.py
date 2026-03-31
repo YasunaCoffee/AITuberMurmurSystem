@@ -20,8 +20,8 @@ from murmur.controllers.main_controller import MainController
 from murmur.state.state_manager import StateManager, SystemState
 from murmur.handlers.daily_summary_handler import DailySummaryHandler
 from murmur.handlers.greeting_handler import GreetingHandler
-from memory_manager import MemoryManager
-from openai_adapter import OpenAIAdapter
+from app.memory_manager import MemoryManager
+from app.openai_adapter import OpenAIAdapter
 from config import config
 
 

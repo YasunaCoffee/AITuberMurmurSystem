@@ -30,10 +30,10 @@ poetry.lock                 # 依存関係ロックファイル
 
 ### v1互換性コンポーネント（本番必須）
 ```
-openai_adapter.py           # OpenAI API通信
-conversation_history.py     # 会話履歴管理
-memory_manager.py           # メモリ管理
-aivis_speech_adapter.py     # 音声合成
+app/openai_adapter.py       # OpenAI API通信
+app/conversation_history.py # 会話履歴管理
+app/memory_manager.py       # メモリ管理
+app/aivis_speech_adapter.py # 音声合成
 ```
 
 ### v2アーキテクチャ（本番必須）
@@ -145,8 +145,8 @@ murmur/run_integrated_test.py   # 統合テスト実行スクリプト
 ```
 debug_pytchat_attributes.py # デバッグ用スクリプト
 debug_test_mode.py          # テストモード用デバッグ
-check_youtube_config.py     # 設定チェック用
-advanced_text_processor.py # 未使用コンポーネント
+scripts/check_youtube_config.py  # 設定チェック用
+app/advanced_text_processor.py   # 未使用コンポーネント
 ```
 
 ### ドキュメントファイル（11ファイル）

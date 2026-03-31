@@ -189,7 +189,7 @@ class TestAivisVoiceConfigToDict:
 
     def test_maps_all_voice_fields_used_by_aivis(self, restore_default_character):
         from murmur.models.character import VoiceConfig
-        from aivis_speech_adapter import voice_config_to_dict
+        from app.aivis_speech_adapter import voice_config_to_dict
 
         vc = VoiceConfig(
             speaker_id=1,

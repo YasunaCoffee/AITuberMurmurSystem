@@ -17,8 +17,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from murmur.core.event_queue import EventQueue
 from murmur.core.events import DailySummaryReady, PrepareDailySummary
 from murmur.handlers.daily_summary_handler import DailySummaryHandler
-from memory_manager import MemoryManager
-from openai_adapter import OpenAIAdapter
+from app.memory_manager import MemoryManager
+from app.openai_adapter import OpenAIAdapter
 from config import config
 
 

@@ -7,9 +7,9 @@ from murmur.core.events import MonologueReady, PrepareMonologue
 from murmur.services.prompt_manager import PromptManager
 from murmur.handlers.mode_manager import ModeManager, ConversationMode
 from murmur.handlers.master_prompt_manager import MasterPromptManager
-from openai_adapter import OpenAIAdapter
-from conversation_history import ConversationHistory
-from memory_manager import MemoryManager
+from app.openai_adapter import OpenAIAdapter
+from app.conversation_history import ConversationHistory
+from app.memory_manager import MemoryManager
 from config import config
 from murmur.runtime.character_runtime import get_character, resolve_character_path, get_monologue_basename
 
