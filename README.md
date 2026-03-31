@@ -22,7 +22,7 @@ AITuberのための自動配信システム。テーマに基づいて自動的�
 | `scripts/` | ユーティリティ（例: `scripts/check_youtube_config.py`） |
 | `main.py` / `config.py` | 起動エントリと設定ローダ（ルートに配置） |
 
-詳細は `doc/package_layout.md` を参照。
+詳細は `doc/package_layout.md` を参照。ユーザー向けの変更履歴は [`RELEASE_NOTES.md`](RELEASE_NOTES.md) を参照。
 
 ## セットアップ
 
