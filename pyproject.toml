@@ -24,6 +24,9 @@ dependencies = [
     "schedule (>=1.2.2,<2.0.0)"
 ]
 
+[project.scripts]
+aituber = "aituber.cli:main"
+
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -46,7 +49,11 @@ version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-package-mode = false
+package-mode = true
+packages = [{include = "aituber"}]
+
+[tool.poetry.scripts]
+aituber = "aituber.cli:main"
 
 [tool.poetry.dependencies]
 python = "^3.11"

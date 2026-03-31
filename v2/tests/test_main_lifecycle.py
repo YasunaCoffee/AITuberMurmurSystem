@@ -27,7 +27,8 @@ class TestMainLifecycle(unittest.TestCase):
         """テストのセットアップ"""
         print("\n--- Setting up test: TestMainLifecycle ---")
         self.main_thread = None
-        self.shutdown_file = "shutdown_request.txt"
+        from config import config
+        self.shutdown_file = os.path.join(config.BASE_DIR, "shutdown_request.txt")
         
         # シャットダウンファイルが残っていれば削除
         if os.path.exists(self.shutdown_file):
