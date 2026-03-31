@@ -88,7 +88,7 @@ integrated_prompt = manager.build_integrated_prompt(
 
 ### 基本的な使用方法
 ```python
-from v2.handlers.master_prompt_manager import MasterPromptManager
+from murmur.handlers.master_prompt_manager import MasterPromptManager
 
 # インスタンス作成（自動で人格データを読み込み）
 manager = MasterPromptManager()

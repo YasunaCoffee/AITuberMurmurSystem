@@ -74,9 +74,9 @@ for PID in $PIDS; do
         # 終了後にサマリーを生成
         echo "📊 配信サマリーを生成中..."
         python3 -c "
-from v2.handlers.stream_summary_handler import StreamSummaryHandler
-from v2.core.event_queue import EventQueue
-from v2.core.events import PrepareStreamSummary
+from murmur.handlers.stream_summary_handler import StreamSummaryHandler
+from murmur.core.event_queue import EventQueue
+from murmur.core.events import PrepareStreamSummary
 import time
 
 # イベントキューを作成

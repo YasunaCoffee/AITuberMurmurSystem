@@ -27,7 +27,7 @@ def _repo_root() -> Path:
 
 
 def _ensure_project_root_on_path() -> None:
-    """リポジトリルートを sys.path に入れる（main / v2 / config を import する前に必要）。"""
+    """リポジトリルートを sys.path に入れる（main / murmur / config を import する前に必要）。"""
     r = str(_repo_root())
     if r not in sys.path:
         sys.path.insert(0, r)
@@ -139,7 +139,7 @@ def _cmd_status(_args: argparse.Namespace) -> None:
 
 
 def _cmd_character_info(args: argparse.Namespace) -> None:
-    from v2.runtime.character_runtime import (
+    from murmur.runtime.character_runtime import (
         get_character,
         get_loaded_character_yaml_path,
         init_character,
@@ -161,7 +161,7 @@ def _cmd_character_info(args: argparse.Namespace) -> None:
 
 
 def _cmd_character_validate(args: argparse.Namespace) -> None:
-    from v2.models.character import load_character
+    from murmur.models.character import load_character
 
     path = args.path
     if not os.path.isabs(path):
@@ -173,7 +173,7 @@ def _cmd_character_validate(args: argparse.Namespace) -> None:
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="aituber",
-        description="AITuber ぶつぶつシステム v2 の CLI",
+        description="AITuber ぶつぶつシステムの CLI",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
