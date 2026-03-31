@@ -1,6 +1,7 @@
 import time
 import threading
 import queue
+from typing import Optional
 
 try:
     import sounddevice as sd
@@ -21,16 +22,20 @@ import datetime
 
 
 def log_speech_output(text):
-    """音声出力された文字をtxt/output_text_history.txtに記録"""
+    """音声出力された文字をキャラクター設定の履歴ファイルに記録"""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     formatted_text = f"[{timestamp}] 🎤 {text}"
     
     try:
-        os.makedirs("txt", exist_ok=True)
-        with open("txt/output_text_history.txt", "a", encoding="utf-8") as f:
+        from v2.runtime.character_runtime import get_history_log_path
+        path = get_history_log_path()
+        d = os.path.dirname(path)
+        if d:
+            os.makedirs(d, exist_ok=True)
+        with open(path, "a", encoding="utf-8") as f:
             f.write(formatted_text + "\n")
     except Exception as e:
-        print(f"[LOG ERROR] Could not write speech to output_text_history.txt: {e}")
+        print(f"[LOG ERROR] Could not write speech to history log: {e}")
 
 
 class AudioManager:
@@ -39,8 +44,13 @@ class AudioManager:
     PlaySpeechコマンドを受け取り、合成と再生を非同期で実行し、
     完了後にSpeechPlaybackCompletedイベントを発行する。
     """
-    def __init__(self, event_queue: EventQueue):
+    def __init__(self, event_queue: EventQueue, speaker_id: Optional[int] = None):
         self.event_queue = event_queue
+        if speaker_id is not None:
+            self._speaker_id = speaker_id
+        else:
+            from v2.runtime.character_runtime import get_character
+            self._speaker_id = get_character().voice.speaker_id
         
         # --- キューの初期化 ---
         # (task_id, sentence_text, sentence_index, total_sentences)
@@ -140,7 +150,7 @@ class AudioManager:
                             f"{sentence[:30]}..."
                         )
                         audio_data, sample_rate = self.aivis_adapter.get_voice(
-                            sentence, 1
+                            sentence, self._speaker_id
                         )
                     except Exception as e:
                         print(

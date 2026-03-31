@@ -19,7 +19,9 @@ dependencies = [
     "requests",
     "soundfile",
     "obs-websocket-py",
-    "pytz (>=2025.2,<2026.0)"
+    "pytz (>=2025.2,<2026.0)",
+    "tiktoken (>=0.7.0,<0.8.0)",
+    "schedule (>=1.2.2,<2.0.0)"
 ]
 
 

@@ -24,14 +24,15 @@ class PromptManager:
     プロンプトファイルを管理し、動的に選択・組み合わせを行うクラス。
     """
     
-    def __init__(self):
+    def __init__(self, monologue_primary: Optional[str] = None):
         self.prompts_dir = config.paths.prompts
         self.prompt_cache: Dict[str, str] = {}
+        mono_first = monologue_primary or "normal_monologue.txt"
         
         # プロンプトの分類とファイルマッピング
         self.prompt_mappings = {
             PromptType.MONOLOGUE: [
-                "normal_monologue.txt",
+                mono_first,
                 "theme_continuation_monologue.txt", 
                 "topic_continuation_monologue.txt"
             ],
@@ -54,7 +55,8 @@ class PromptManager:
         
         # プロンプトの重み付け（選択確率を調整）
         self.prompt_weights = {
-            "normal_monologue.txt": 0.6,  # 通常の独り言（最頻出）
+            mono_first: 0.6,  # 通常の独り言（最頻出）
+            "normal_monologue.txt": 0.6,
             "theme_continuation_monologue.txt": 0.2,
             "topic_continuation_monologue.txt": 0.15,
             "episode_deep_dive_prompt.txt": 0.05,

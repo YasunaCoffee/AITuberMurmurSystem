@@ -24,6 +24,17 @@ class TestCharacterIdentity:
         assert identity.name == "蒼月ハヤテ"
         assert identity.description != ""
         assert identity.hashtag == "#Aotsuki_Hayate_Data"
+        assert identity.display_aliases == ()
+
+    def test_identity_display_aliases_normalized_from_list(self):
+        from v2.models.character import CharacterIdentity
+
+        identity = CharacterIdentity(
+            name="X",
+            description="d",
+            display_aliases=["a", "b"],
+        )
+        assert identity.display_aliases == ("a", "b")
 
     def test_identity_name_cannot_be_empty(self):
         from v2.models.character import CharacterIdentity
@@ -286,6 +297,50 @@ memory:
         with pytest.raises(FileNotFoundError):
             load_character("/nonexistent/path.yaml")
 
+    def test_load_character_ignores_unknown_fields_in_sections(self):
+        """将来のYAML拡張フィールドがあっても無視して読める"""
+        from v2.models.character import Character, load_character
+
+        y = self.SAMPLE_YAML.replace(
+            "  style_type: \"talk\"\n",
+            "  style_type: \"talk\"\n  experimental_future_key: 123\n",
+        )
+        y = y.replace(
+            "  hashtag: \"#test\"\n",
+            "  hashtag: \"#test\"\n  future_identity_note: \"ignore me\"\n",
+        )
+        path = self._write_yaml(y)
+        try:
+            char = load_character(path)
+            assert isinstance(char, Character)
+            assert char.voice.speaker_id == 99
+        finally:
+            os.unlink(path)
+
+    def test_load_character_missing_section_raises(self):
+        from v2.models.character import load_character
+
+        bad = """\
+identity:
+  name: "a"
+  description: "b"
+voice:
+  speaker_id: 1
+  speaker_uuid: "u"
+  speaker_name: "n"
+  style_id: 1
+  style_name: "ノーマル"
+  style_type: "talk"
+memory:
+  memory_file: "txt/m.txt"
+"""
+        path = self._write_yaml(bad)
+        try:
+            with pytest.raises(ValueError, match="prompts"):
+                load_character(path)
+        finally:
+            os.unlink(path)
+
     def test_load_hayate_sample(self):
         """実際のサンプルYAML（蒼月ハヤテ）が読み込めること"""
         from v2.models.character import load_character
@@ -298,3 +353,4 @@ memory:
         assert char.voice.speaker_id == 1
         assert char.voice.speed_scale == 0.96
         assert char.voice.tempo_dynamics_scale == 1.8
+        assert "ハヤテ" in char.identity.display_aliases

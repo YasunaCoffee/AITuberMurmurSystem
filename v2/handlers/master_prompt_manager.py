@@ -7,14 +7,16 @@ from typing import Dict, Any, Optional, List
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from config import config
+from v2.runtime.character_runtime import get_character, resolve_character_path
 
 
 class MasterPromptManager:
     """master_prompt.txtをすべての応答に反映させる管理システム"""
     
     def __init__(self):
-        self.master_prompt_path = os.path.join(config.paths.prompts, "master_prompt.txt")
-        self.persona_data_path = "txt/kioku_hayate.txt"
+        _c = get_character()
+        self.master_prompt_path = resolve_character_path(_c.prompts.master_prompt)
+        self.persona_data_path = resolve_character_path(_c.memory.memory_file)
         self.master_template = None
         self.persona_data = None
         self._load_master_prompt()

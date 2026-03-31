@@ -17,6 +17,7 @@ from openai_adapter import OpenAIAdapter
 from conversation_history import ConversationHistory
 from memory_manager import MemoryManager
 from config import config
+from v2.runtime.character_runtime import get_character, resolve_character_path, get_monologue_basename
 
 
 class GreetingHandler:
@@ -41,10 +42,10 @@ class GreetingHandler:
         # v1のコンポーネントを初期化
         try:
             # プロンプト管理の初期化
-            self.prompt_manager = PromptManager()
+            self.prompt_manager = PromptManager(monologue_primary=get_monologue_basename())
             
             # OpenAI Adapterの初期化
-            system_prompt_path = os.path.join(config.paths.prompts, "persona_prompt.txt")
+            system_prompt_path = resolve_character_path(get_character().prompts.persona_prompt)
             with open(system_prompt_path, "r", encoding="utf-8") as f:
                 system_prompt = f.read()
             self.openai_adapter = OpenAIAdapter(system_prompt, silent_mode=False)
@@ -54,6 +55,9 @@ class GreetingHandler:
             
             # メモリ管理の初期化
             self.memory_manager = MemoryManager(self.openai_adapter)
+            self.memory_manager.set_auto_save_path(
+                resolve_character_path(get_character().memory.memory_file)
+            )
             
             print("[GreetingHandler] Initialized successfully with OpenAI adapter and PromptManager")
             
@@ -155,7 +159,13 @@ class GreetingHandler:
         """開始時の挨拶プロンプトを構築する"""
         try:
             # 汎用的な挨拶プロンプトを読み込む
-            with open("prompts/initial_greeting.txt", "r", encoding="utf-8") as f:
+            _gp = get_character().prompts
+            _initial = (
+                resolve_character_path(_gp.greeting_prompt)
+                if _gp.greeting_prompt
+                else os.path.join(config.paths.prompts, "initial_greeting.txt")
+            )
+            with open(_initial, "r", encoding="utf-8") as f:
                 greeting_prompt = f.read()
             
             # 記憶と履歴を取得
@@ -178,13 +188,19 @@ class GreetingHandler:
             
         except Exception as e:
             print(f"[GreetingHandler] Error building initial greeting prompt: {e}")
-            return "あなたは蒼月ハヤテです。配信開始の挨拶をしてください。"
+            return f"あなたは{get_character().name}です。配信開始の挨拶をしてください。"
 
     def _build_ending_greeting_prompt(self, bridge_text: str, stream_summary: str) -> str:
         """終了時の挨拶プロンプトを構築する"""
         try:
             # プロンプトファイルを読み込み
-            with open('prompts/ending_greeting.txt', 'r', encoding='utf-8') as f:
+            _ep = get_character().prompts
+            _ending = (
+                resolve_character_path(_ep.ending_prompt)
+                if _ep.ending_prompt
+                else os.path.join(config.paths.prompts, "ending_greeting.txt")
+            )
+            with open(_ending, 'r', encoding='utf-8') as f:
                 prompt_template = f.read()
             
             # 変数を埋め込み
