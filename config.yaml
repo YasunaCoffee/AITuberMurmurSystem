@@ -35,7 +35,7 @@ paths:
   txt: "txt"                                                # テキストファイル格納ディレクトリ
   summary: "summary"                                        # 配信記録要約ディレクトリ
   
-  # 個別ファイルパス
+  # 個別ファイルパス（character YAML の memory と重複しうる。ランタイムは Character を優先）
   output_text_history: "txt/output_text_history.txt"        # 発言履歴保存
   memory_file: "txt/kioku_hayate.txt"                         # 長期記憶データ
   summary_dir: "summary"                                    # 配信記録要約（互換性のため保持）

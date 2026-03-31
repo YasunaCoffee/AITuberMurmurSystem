@@ -77,3 +77,16 @@ def get_monologue_basename() -> str:
     if c.prompts.monologue_prompt:
         return os.path.basename(c.prompts.monologue_prompt.replace("\\", "/"))
     return "normal_monologue.txt"
+
+
+def get_ai_speaker_labels() -> frozenset[str]:
+    """
+    会話ログ上で「AI側の発言」として扱う話者ラベル集合。
+    identity.name / voice.speaker_name / 固定の AI に加え、identity.display_aliases を含む。
+    """
+    c = get_character()
+    labels = {c.name, c.voice.speaker_name, "AI"}
+    labels.update(c.identity.display_aliases)
+    if "ハヤテ" in c.name:
+        labels.add("ハヤテ")
+    return frozenset(labels)

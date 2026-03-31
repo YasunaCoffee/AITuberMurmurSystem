@@ -1,6 +1,7 @@
 """ランタイム初期化（キャラクター読み込みなど）。"""
 
 from .character_runtime import (
+    get_ai_speaker_labels,
     get_character,
     get_history_log_path,
     get_monologue_basename,
@@ -10,6 +11,7 @@ from .character_runtime import (
 )
 
 __all__ = [
+    "get_ai_speaker_labels",
     "get_character",
     "get_history_log_path",
     "get_monologue_basename",

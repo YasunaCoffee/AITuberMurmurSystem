@@ -11,6 +11,7 @@ import pytest
 
 from config import config
 from v2.runtime.character_runtime import (
+    get_ai_speaker_labels,
     get_character,
     get_history_log_path,
     get_monologue_basename,
@@ -25,6 +26,8 @@ identity:
   name: "TDDテストキャラ"
   description: "TDD用"
   hashtag: "#tdd"
+  display_aliases:
+    - "TDD略"
 
 voice:
   speaker_id: 42
@@ -156,6 +159,27 @@ class TestGetMonologueBasename:
             reset_character_runtime()
             init_character(path)
             assert get_monologue_basename() == "normal_monologue.txt"
+        finally:
+            os.unlink(path)
+
+
+class TestGetAiSpeakerLabels:
+    def test_includes_name_voice_aliases_and_ai(self, restore_default_character):
+        reset_character_runtime()
+        init_character()
+        lab = get_ai_speaker_labels()
+        assert "AI" in lab
+        assert "蒼月ハヤテ" in lab
+        assert "ハヤテ" in lab
+
+    def test_includes_yaml_display_aliases(self, restore_default_character):
+        path = _write_utf8_yaml(MINIMAL_YAML)
+        try:
+            reset_character_runtime()
+            init_character(path)
+            lab = get_ai_speaker_labels()
+            assert "TDD略" in lab
+            assert "TDDテストキャラ" in lab
         finally:
             os.unlink(path)
 
