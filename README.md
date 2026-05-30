@@ -27,7 +27,7 @@ AITuberのための自動配信システム。テーマに基づいて自動的�
 
 ### Claude Code で開発する場合
 
-[Claude Code](https://docs.claude.com/claude-code) を使う場合、`.claude/skills/` の skill が起動・キャラ定義・テーマ作成・機能追加（イベント駆動）・環境診断・リリースの各作業を支援します。一覧は [`.claude/skills/README.md`](.claude/skills/README.md) を参照。
+[Claude Code](https://docs.claude.com/claude-code) を使う場合、`.claude/skills/` の skill がセットアップ（オンボーディング）・起動・キャラ定義・テーマ作成・機能追加（イベント駆動）・環境診断・リリースの各作業を支援します。一覧は [`.claude/skills/README.md`](.claude/skills/README.md) を参照。**初めての方は `aituber-onboarding`（「セットアップして」「初めて使う」などで起動）から始めると、前提ソフトの導入から初回起動まで順に案内されます。**
 
 ## セットアップ
 

@@ -6,6 +6,7 @@
 
 | skill | 使うとき |
 |-------|----------|
+| [`aituber-onboarding`](aituber-onboarding/SKILL.md) | **初めてのセットアップ**。前提ソフト→clone→`poetry install`→`.env`→AivisSpeech/OBS/仮想オーディオ→検証→初回起動まで初心者向けに案内（最初の入口） |
 | [`aituber-run`](aituber-run/SKILL.md) | 起動・停止・状態確認などの運用（`poetry run aituber run/stop/status`、`--theme`/`--character`/`--detach`） |
 | [`aituber-character`](aituber-character/SKILL.md) | キャラクター定義 YAML（`characters/*.yaml`）の作成・編集・検証 |
 | [`aituber-theme`](aituber-theme/SKILL.md) | テーマファイル（`prompts/*.txt`）の作成・編集・指定 |

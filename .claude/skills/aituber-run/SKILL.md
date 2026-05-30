@@ -18,6 +18,9 @@ z-aituber 本体（main.py）の起動・停止・状態確認を `poetry run ai
 
 ## 前提（起動前に満たすこと）
 
+> 初めてのセットアップ（前提ソフトの導入〜初回起動まで）は [[aituber-onboarding]] が順を追って案内する。すでに環境がある場合は以下を満たせばよい。
+
+
 - **AivisSpeech Engine** が起動していること。蒼月ハヤテのボイスモデルを Engine にインポート済みであること（既定キャラ characters/hayate.yaml は speaker_id 1）。接続先は `config.yaml` の `audio.synthesis.aivis_url`（既定 `http://127.0.0.1:10101`）。
 - **OBS**: WebSocket Server を有効化し、テキストソース名 `answer` を用意。音声は VB-CABLE を出力デバイスにして OBS で取り込む。`config.yaml` の `obs_subtitles.enabled` で字幕連携を制御。
 - **VB-CABLE** を音声出力経路として用意。
@@ -98,6 +101,7 @@ poetry run aituber status
 
 ## 関連
 
+- [[aituber-onboarding]] — 初めてのセットアップ（前提ソフト〜初回起動まで）
 - [[aituber-diagnose]] — 起動・接続不良の切り分け（AivisSpeech / OBS / YouTube / OpenAI）
 - [[aituber-character]] — キャラ定義の確認・検証・切り替え（`--character`）
 - [[aituber-theme]] — テーマファイルの作成・指定（`--theme`）

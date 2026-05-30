@@ -136,6 +136,7 @@ config.reload_config()   # 成功で True、再度 validate 結果を表示
 
 ## 関連
 
+- [[aituber-onboarding]] — 初めてのセットアップ（初回起動まで導く。初期不良の多くはここで防げる）
 - [[aituber-run]] — 起動・停止・`status`・`monologue.log` の見方
 - [[aituber-character]] — キャラ YAML の検証（`character validate` / `info`）、`voice` 設定
 - [[aituber-dev]] — イベント駆動アーキテクチャ・テスト
