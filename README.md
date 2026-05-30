@@ -21,8 +21,13 @@ AITuberのための自動配信システム。テーマに基づいて自動的�
 | `aituber/` | `poetry run aituber` 用 CLI |
 | `scripts/` | ユーティリティ（例: `scripts/check_youtube_config.py`） |
 | `main.py` / `config.py` | 起動エントリと設定ローダ（ルートに配置） |
+| `.claude/skills/` | Claude Code 用の開発・運用支援 skill（[一覧](.claude/skills/README.md)） |
 
 詳細は `doc/package_layout.md` を参照。ユーザー向けの変更履歴は [`RELEASE_NOTES.md`](RELEASE_NOTES.md) を参照。
+
+### Claude Code で開発する場合
+
+[Claude Code](https://docs.claude.com/claude-code) を使う場合、`.claude/skills/` の skill が起動・キャラ定義・テーマ作成・機能追加（イベント駆動）・環境診断・リリースの各作業を支援します。一覧は [`.claude/skills/README.md`](.claude/skills/README.md) を参照。
 
 ## セットアップ
 
