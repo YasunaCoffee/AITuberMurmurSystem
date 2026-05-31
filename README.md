@@ -59,7 +59,7 @@ poetry install
 4. OBSのセットアップ：
    - OBS Studioをインストール
    - WebSocketサーバーを有効化（ツール > WebSocket Server Settings）
-   - テキストソースを追加（名前: "answer"）
+   - テキストソースを追加（名前: **`Answer`**。大文字始まり。本体が `set_input_settings(name="Answer", ...)` で字幕を更新します）。機能によっては `Question` / `SelectedComment` / `Summary` も使用します（`murmur/obs_adaper.py`）。
 
 5. VB-CABLEのセットアップ：
    - [VB-CABLE](https://vb-audio.com/Cable/)をダウンロードしてインストール
@@ -68,13 +68,18 @@ poetry install
 
 ### 設定
 
-1. `config.yaml`の設定：
+1. API キーなどの設定（`.env`）：
+   - `cp .env.template .env` で `.env` を作成し、`OPENAI_API_KEY` / `YOUTUBE_VIDEO_ID` / `OBS_WS_PASSWORD` などの **実値を `.env` に** 記入します（秘密情報は `.gitignore` 済みの `.env` に置く）。
+   - `config.yaml` の `api_keys` セクションは **環境変数名のみ** を書く欄です（既定で `openai: OPENAI_API_KEY` のように対応済み）。値を直書きせず、通常は編集不要です。
+
 ```yaml
+# config.yaml（抜粋）: 値ではなく「参照する環境変数名」を書く
 api_keys:
-  openai: "your-api-key"
-paths:
-  voicevox: "path-to-voicevox"
+  openai: OPENAI_API_KEY
+  youtube_video_id: YOUTUBE_VIDEO_ID
 ```
+
+   - 音声合成エンジン（AivisSpeech）の接続先は `config.yaml` の `audio.synthesis.aivis_url`（既定 `http://127.0.0.1:10101`）で指定します。
 
 2. テーマファイルの準備：
    - `prompts/`ディレクトリにテーマファイルを配置
