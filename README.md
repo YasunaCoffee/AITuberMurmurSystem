@@ -4,6 +4,10 @@
 
 AITuberのための自動配信システム。テーマに基づいて自動的に話題を展開し、視聴者とインタラクティブなコミュニケーションを行います。
 
+> **🚀 [Claude Code](https://docs.claude.com/claude-code) をお使いなら、セットアップは skill にお任せできます。**
+> `.claude/skills/` の **`aituber-onboarding`** が、前提ソフトの導入 → クローン → `poetry install` → `.env` 作成 → AivisSpeech / OBS / 仮想オーディオ設定 → 設定検証 → 初回起動まで、初心者でも迷わないよう順に案内します（「セットアップして」「初めて使う」などで起動）。
+> 手動でやる場合は下記の [セットアップ](#セットアップ) を参照。skill 一覧は [`.claude/skills/README.md`](.claude/skills/README.md)。
+
 ## 機能
 
 - テーマベースの自動会話生成
@@ -30,6 +34,8 @@ AITuberのための自動配信システム。テーマに基づいて自動的�
 [Claude Code](https://docs.claude.com/claude-code) を使う場合、`.claude/skills/` の skill がセットアップ（オンボーディング）・起動・キャラ定義・テーマ作成・機能追加（イベント駆動）・環境診断・リリースの各作業を支援します。一覧は [`.claude/skills/README.md`](.claude/skills/README.md) を参照。**初めての方は `aituber-onboarding`（「セットアップして」「初めて使う」などで起動）から始めると、前提ソフトの導入から初回起動まで順に案内されます。**
 
 ## セットアップ
+
+> Claude Code を使うなら、以下の手順を `aituber-onboarding` skill が順に案内します（上のお知らせを参照）。手動で進める場合は以下のとおり。
 
 ### 必要なソフトウェア
 
