@@ -4,6 +4,26 @@ AITuber ぶつぶつシステム（z-aituber）のユーザー向け変更履歴
 
 ---
 
+## 開発支援: Claude Code Skills（2026-05-31）
+
+> このエントリはパッケージ版（`pyproject.toml` の `z-aituber`）を **変更しません**。リポジトリで [Claude Code](https://docs.claude.com/claude-code) を使うコントリビュータ／オーナー向けの開発支援の追加です。
+
+`.claude/skills/` に、このリポジトリでの作業を支援する 7 つの skill を追加しました。各 skill は `description` に書かれた状況に合致すると自動的に参照され、手動では `/<name>` で呼べます。記載のコマンド・パス・フィールド名は実装に照らして検証済みです。
+
+| skill | 役割 |
+|-------|------|
+| `aituber-onboarding` | 初めてのセットアップを初心者向けに案内（前提ソフト→`poetry install`→`.env`→AivisSpeech/OBS/仮想オーディオ→検証→初回起動） |
+| `aituber-run` | 起動・停止・状態確認の運用（`poetry run aituber run/stop/status`、`--theme`/`--character`/`--detach`） |
+| `aituber-character` | キャラクター定義 YAML（`characters/*.yaml`）の作成・編集・検証 |
+| `aituber-theme` | テーマファイル（`prompts/*.txt`）の作成・編集・指定 |
+| `aituber-dev` | 機能追加（イベント駆動・責務分離）と TDD・`pytest` 実行 |
+| `aituber-diagnose` | 環境・設定の不調の切り分け（AivisSpeech / OBS / YouTube / OpenAI） |
+| `aituber-release` | リリースノート（本ファイル）とバージョン更新の手順 |
+
+一覧は [`.claude/skills/README.md`](.claude/skills/README.md) を参照。コードを変更したら該当 skill も更新してください。
+
+---
+
 ## 1.1.0（2026-03〜04）
 
 パッケージ版 **1.1.0**（`pyproject.toml`）。CLI の一本化、キャラクター定義のランタイム統合、パッケージ名の整理、ルート直下のモジュール整理を含みます。
