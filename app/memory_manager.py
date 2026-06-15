@@ -5,7 +5,7 @@ from collections import deque
 from typing import Optional
 import re
 import os
-from openai_adapter import OpenAIAdapter
+from app.openai_adapter import OpenAIAdapter
 from config import config
 
 

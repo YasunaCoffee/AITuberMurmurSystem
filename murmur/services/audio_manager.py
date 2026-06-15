@@ -210,7 +210,12 @@ class AudioManager:
                 # 音声を再生
                 if audio_data is not None and sample_rate > 0:
                     sd.play(audio_data, sample_rate)
-                    sd.wait()  # 再生完了まで待機
+                    # 注: sd.wait() は一部の仮想シンク(PipeWire 等)で finished コールバックが
+                    # 発火せず永久ハングし、2文目以降が再生されなくなる。再生長ぶんを待って
+                    # から sd.stop() することで、コールバックに依存せず確実に次へ進める。
+                    _play_seconds = len(audio_data) / float(sample_rate)
+                    time.sleep(_play_seconds + 0.25)
+                    sd.stop()
 
                 # 字幕をクリア（音声再生後）
                 if self.obs_text_manager:
@@ -416,16 +421,21 @@ class AudioManager:
         print("\n利用可能な音声出力デバイス:")
         print(sd.query_devices())
         
-        # Cable Inputを探す
-        cable_input_idx = None
-        for idx, device in enumerate(sd.query_devices()):
-            if 'CABLE Input' in device['name']:
-                cable_input_idx = idx
+        # 出力先を探す: まず配信用の仮想シンク "aituber"（PipeWire/Linux）→
+        # 次に "CABLE Input"（VB-CABLE: Windows/Mac）。どちらも無ければ既定出力。
+        target_idx = None
+        target_name = None
+        for key in ('aituber', 'CABLE Input'):
+            for idx, device in enumerate(sd.query_devices()):
+                if device['max_output_channels'] > 0 and key in device['name']:
+                    target_idx, target_name = idx, device['name']
+                    break
+            if target_idx is not None:
                 break
-        
-        if cable_input_idx is not None:
-            # Cable Inputをデフォルトの出力デバイスとして設定
-            sd.default.device = None, cable_input_idx  # 入力はデフォルト、出力はCable Input
-            print(f"\n✅ Cable Input (デバイスID: {cable_input_idx}) を出力デバイスとして設定しました")
+
+        if target_idx is not None:
+            # 見つかった仮想出力をデフォルトの出力デバイスに設定（入力は既定のまま）
+            sd.default.device = None, target_idx
+            print(f"\n✅ 出力デバイス '{target_name}' (デバイスID: {target_idx}) を設定しました")
         else:
-            print("\n⚠️ Cable Inputが見つかりませんでした。デフォルトの出力デバイスを使用します")
+            print("\n⚠️ 仮想出力(aituber/CABLE Input)が見つかりません。既定の出力デバイスを使用します")

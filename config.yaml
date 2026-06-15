@@ -46,15 +46,15 @@ paths:
 # 4. OpenAI設定
 # ============================================================
 openai:
-  # モデル設定
+  # モデル設定（Ollama: gemma4:e4b を全用途で使用）
   models:
-    default: "gpt-4.1"           # デフォルトモデル
-    selection: "gpt-4.1"         # 選択処理用
-    response: "gpt-4.1"          # 応答生成用
-    emotion: "gpt-4o-mini"       # 感情処理用 (軽量モデル)
-    stream_summary: "gpt-4.1"    # 配信要約用
-    theme_scoring: "gpt-4.1"     # テーマスコア測定用
-    conversation_history: "gpt-4.1"  # 会話履歴処理用
+    default: "gemma4:e4b"           # デフォルトモデル
+    selection: "gemma4:e4b"         # 選択処理用
+    response: "gemma4:e4b"          # 応答生成用
+    emotion: "gemma4:e4b"           # 感情処理用
+    stream_summary: "gemma4:e4b"    # 配信要約用
+    theme_scoring: "gemma4:e4b"     # テーマスコア測定用
+    conversation_history: "gemma4:e4b"  # 会話履歴処理用
   
   # API設定
   api:

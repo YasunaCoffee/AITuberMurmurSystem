@@ -6,7 +6,7 @@ import time
 import threading
 import queue
 from typing import Optional, Dict, List, Any
-from openai_adapter import OpenAIAdapter
+from app.openai_adapter import OpenAIAdapter
 from config import config
 from dataclasses import dataclass, asdict
 
