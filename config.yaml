@@ -46,15 +46,24 @@ paths:
 # 4. OpenAI設定
 # ============================================================
 openai:
-  # モデル設定（Ollama: gemma4:e4b を全用途で使用）
+  # モデル設定（Ollama: gemma4-12b-ctx32k を全用途で使用）
+  #  ※gemma4-12b-ctx32k = gemma4:12b に num_ctx 32768 を設定したカスタムモデル(Modelfile)。
+  #    persona+master だけで約20Kトークンあり、既定num_ctx(4096)では溢れて空応答になるため、
+  #    32K窓に拡張。VRAMは8.4GB常駐＋KVで計約11GB(16GBに収まる)、定常生成は約37s。
+  #  【2026-06-24 モデル選定の経緯】
+  #   ・gemma4:e4b(実質4B)は master_prompt でラップした本編プロンプトに対し「（」だけ返す空応答になり使えない（地力不足）。
+  #     → 単体の素朴なプロンプトなら e4b でも本編を書けるが、ラップ後の複雑な指示には負ける。
+  #   ・gemma4:12b は本編を正しく生成できる。ただし1発話の生成が約34秒（RTX4080/16GB, q4）。→ network.api_timeout を 70 に延長必須。
+  #   ・プリフェッチ(MainController)が現発話の再生中(本編1本=約40〜60秒)に次を裏で生成するので、タイムアウトさえ確保すれば体感の間（フィラー）は出ない。
+  #   ・本番Case配信で安定していたのは GPT-4.1(OpenAI) だが API キー要・従量課金のため、ローカル運用は 12b を採用。OpenAIに戻すなら .env の OPENAI_BASE_URL/KEY とここを gpt-4.1 に。
   models:
-    default: "gemma4:e4b"           # デフォルトモデル
-    selection: "gemma4:e4b"         # 選択処理用
-    response: "gemma4:e4b"          # 応答生成用
-    emotion: "gemma4:e4b"           # 感情処理用
-    stream_summary: "gemma4:e4b"    # 配信要約用
-    theme_scoring: "gemma4:e4b"     # テーマスコア測定用
-    conversation_history: "gemma4:e4b"  # 会話履歴処理用
+    default: "gemma4-12b-ctx32k"           # デフォルトモデル
+    selection: "gemma4-12b-ctx32k"         # 選択処理用
+    response: "gemma4-12b-ctx32k"          # 応答生成用
+    emotion: "gemma4-12b-ctx32k"           # 感情処理用
+    stream_summary: "gemma4-12b-ctx32k"    # 配信要約用
+    theme_scoring: "gemma4-12b-ctx32k"     # テーマスコア測定用
+    conversation_history: "gemma4-12b-ctx32k"  # 会話履歴処理用
   
   # API設定
   api:
@@ -143,7 +152,7 @@ network:
   max_retries: 3                          # 最大リトライ回数
   retry_delay: 2.0                        # リトライ間隔（秒）
   connection_timeout: 10.0                # 接続タイムアウト（秒）
-  api_timeout: 20                         # デフォルトのAPIタイムアウト（秒）
+  api_timeout: 70                         # デフォルトのAPIタイムアウト（秒）。gemma4:12bの生成(約34s)が切れないよう延長。プリフェッチが再生中に裏で生成するので体感の間は出ない
   api_timeout_summary: 60                 # 【追加】配信要約用の長いタイムアウト（秒）
 
 # ============================================================

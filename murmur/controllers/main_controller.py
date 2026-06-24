@@ -52,7 +52,11 @@ class MainController:
         self.theme_reading_completed = False
         
         # プリフェッチシステムの初期化
-        self.prefetch_queue_size = 2
+        # 【2026-06-24】2→4 に増量。gemma4:12bは1本の生成が約34sと遅く、本編再生中(約40〜60s)に
+        # 裏で1本生成しても、リトライ(空応答再生成)や短い発話が重なるとキューが枯れてフィラーになる。
+        # テーマ紹介(約3分)の間に4本貯めておけば、本編フェーズの生成変動を吸収して間（フィラー）が出にくい。
+        # （文脈が変わる時は clear_prefetch_queue で破棄されるので、貯めすぎによる陳腐化は限定的）
+        self.prefetch_queue_size = 4
         self.prefetched_monologues = queue.Queue(maxsize=self.prefetch_queue_size)
         self.is_prefetching = False # プリフェッチ中フラグ
         self.command_handlers = {}  # MainControllerはコマンドを直接処理しない

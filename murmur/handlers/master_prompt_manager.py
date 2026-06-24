@@ -133,12 +133,23 @@ class MasterPromptManager:
             
             # コンテキスト制限を考慮した最適化
             selected_entries = self._optimize_entries_for_context(relevant_entries, keywords)
-            
+
             if selected_entries:
-                return "\n".join(selected_entries)
+                result = "\n".join(selected_entries)
             else:
                 # キーワードマッチしない場合は簡潔な基本情報を返す
-                return self._get_essential_persona_info()
+                result = self._get_essential_persona_info()
+
+            # 【2026-06-24 プロンプト肥大対策】人格データ注入を最大1500字に制限。
+            # persona_data(kioku_hayate.txt≒6万字)が共通キーワード（思考/観測/分析 等）に大量マッチし、
+            # _optimize_entries_for_context をすり抜けて丸ごと注入され、最終プロンプトが7万トークン超→
+            # Ollama の context窓を溢れて空応答（フィラー化）になる主因だった。
+            # ※人格そのものは system の persona_prompt.txt に既にあるので、ここは関連抜粋に絞れば十分。
+            #   恒久対応はベクトルDB(ruri)で関連記憶を top-k 検索する方式へ。
+            _MAX_PERSONA_CHARS = 1500
+            if len(result) > _MAX_PERSONA_CHARS:
+                result = result[:_MAX_PERSONA_CHARS] + "\n…(人格データ抜粋はここまで)"
+            return result
                 
         except Exception as e:
             print(f"[MasterPromptManager] Error extracting persona info: {e}")

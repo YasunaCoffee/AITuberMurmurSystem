@@ -289,8 +289,16 @@ class MemoryManager:
 
             summary_parts = [s.strip() for s in self.long_term_summary.strip().split('\n\n') if s.strip()]
 
-            recent_summary_parts = summary_parts[-5:]
+            # 【2026-06-24 プロンプト肥大対策（暫定）】以前は直近5セクションを丸ごと注入していたが、
+            # 1セクションが巨大化（要約が圧縮されず蓄積。kioku_hayate.txtは約180KB）すると、
+            # 最終プロンプトが7万トークン超になり Ollama の context窓を溢れて空応答→フィラー化していた。
+            # ここでは直近3セクション＋総量を約2000字に制限して注入量を抑える。
+            # ※恒久対応はベクトルDB(ruri等)で「現在の文脈に関連する記憶だけ」を top-k 検索して注入する方式へ。
+            recent_summary_parts = summary_parts[-3:]
             recent_summary = "\n\n".join(recent_summary_parts)
+            _MAX_SUMMARY_CHARS = 2000
+            if len(recent_summary) > _MAX_SUMMARY_CHARS:
+                recent_summary = "…(古い要約は省略)…\n" + recent_summary[-_MAX_SUMMARY_CHARS:]
 
         return f"これまでの配信での出来事の要約:\n{recent_summary}"
 

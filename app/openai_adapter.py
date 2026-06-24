@@ -172,6 +172,12 @@ class OpenAIAdapter:
                     ],
                     temperature=0.8,  # 少し上げて多様性を促す
                     max_tokens=max_tokens,
+                    # 【2026-06-24 空応答の真因対策】gemma4:12b は thinking(推論)モデルで、
+                    # 既定だと長い思考を先に出す。max_tokens=1024 では思考だけで打ち切られ
+                    # (finish_reason=length)、肝心の content が空→フィラー化していた。
+                    # reasoning_effort=none で思考をOFFにすると答えを直接出す(eval~130で爆速・空応答ゼロ)。
+                    # ※ollama の /v1 では "think":false は無視され、"reasoning_effort":"none" が効く(extra_bodyで送る)。
+                    extra_body={"reasoning_effort": "none"},
                 )
 
                 # ▼▼▼ 追加: API呼び出し時間計測終了・表示 ▼▼▼
@@ -184,6 +190,15 @@ class OpenAIAdapter:
                 # ▲▲▲ 追加: API呼び出し時間計測終了・表示 ▲▲▲
                 
                 answer = res.choices[0].message.content
+                # 【2026-06-24 追加】空応答リトライ。ローカルLLM(gemma4:12b)は複雑な
+                # master_promptラップに対し稀に「」/空白だけ返す（本編が出ずフィラーに化ける原因）。
+                # 即フォールバックせずループ内で作り直すことで、フィラー混入を減らす。
+                # プリフェッチは現発話の再生中に裏で走るので、1回作り直す余裕がある。
+                if (answer is None or not str(answer).strip()) and attempt < max_retries - 1:
+                    if not self.silent_mode:
+                        print(f"⚠️ 空応答のため再生成します (試行{attempt + 1}/{max_retries}, モデル: {model})")
+                    time.sleep(0.3)
+                    continue
                 if not self.silent_mode:
                     print("✅ OpenAI API呼び出し成功")
                 return answer
@@ -265,6 +280,9 @@ class OpenAIAdapter:
             "gpt-4-32k": 32768,
             "gpt-3.5-turbo": 4096,
             "gpt-4.1": 8192, # 仮
+            "gemma4-12b-ctx32k": 32768,  # num_ctx 32768 のローカルカスタムモデル
+            "gemma4:12b": 8192,
+            "gemma4:e4b": 8192,
         }
         # デフォルトは4096
         return model_token_limits.get(model, 4096)
