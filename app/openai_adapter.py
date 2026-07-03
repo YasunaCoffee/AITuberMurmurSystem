@@ -85,7 +85,16 @@ class OpenAIAdapter:
             return False
 
     def create_chat_for_response(self, question):
-        return self._create_chat_with_model(question, self.model_response, max_tokens=config.openai.api.max_tokens_default)
+        # 発話生成は hayate-ft（ファインチューニング）を想定。学習時と同じ temperature 0.9、
+        # 思考出力なし（gemma-3-12b-it ベースの非thinkingモデルなので reasoning_effort は送らない）。
+        # system は handler が渡す FINETUNED_SYSTEM_PROMPT（固定3行）が使われる。
+        return self._create_chat_with_model(
+            question,
+            self.model_response,
+            max_tokens=config.openai.api.max_tokens_default,
+            temperature=0.9,
+            reasoning_effort=None,
+        )
 
     def create_chat_for_theme_scoring(self, question):
         """テーマスコア測定専用メソッド（費用削減のためminiモデル使用）"""
@@ -101,7 +110,8 @@ class OpenAIAdapter:
         )
 
     def _create_chat_with_model(
-        self, question, model, max_tokens=None, timeout=None
+        self, question, model, max_tokens=None, timeout=None,
+        temperature=0.8, reasoning_effort="none"
     ):
         """
         指定されたモデルでチャットを実行する（テストモード対応）
@@ -110,6 +120,9 @@ class OpenAIAdapter:
             model: 使用するモデル
             max_tokens: 最大トークン数
             timeout: タイムアウト時間（Noneの場合はconfig.yamlから取得）
+            temperature: サンプリング温度（発話=0.9 / 要約・スコアリング=0.8）
+            reasoning_effort: gemma4:12b(thinking) の思考出力制御。"none" で抑止。
+                None を渡すと extra_body を送らない（hayate-ft など非thinkingモデル用）。
         Returns:
             str: 応答文
         """
@@ -164,21 +177,24 @@ class OpenAIAdapter:
                 api_start_time = time.time()
                 # ▲▲▲ 追加: API呼び出し時間計測開始 ▲▲▲
 
-                res = client.chat.completions.create(
+                create_kwargs = dict(
                     model=model,
                     messages=[
                         {"role": "system", "content": self.system_prompt},
                         {"role": "user", "content": question}
                     ],
-                    temperature=0.8,  # 少し上げて多様性を促す
+                    temperature=temperature,
                     max_tokens=max_tokens,
-                    # 【2026-06-24 空応答の真因対策】gemma4:12b は thinking(推論)モデルで、
-                    # 既定だと長い思考を先に出す。max_tokens=1024 では思考だけで打ち切られ
-                    # (finish_reason=length)、肝心の content が空→フィラー化していた。
-                    # reasoning_effort=none で思考をOFFにすると答えを直接出す(eval~130で爆速・空応答ゼロ)。
-                    # ※ollama の /v1 では "think":false は無視され、"reasoning_effort":"none" が効く(extra_bodyで送る)。
-                    extra_body={"reasoning_effort": "none"},
                 )
+                # 【2026-06-24 空応答の真因対策】gemma4:12b は thinking(推論)モデルで、
+                # 既定だと長い思考を先に出す。max_tokens=1024 では思考だけで打ち切られ
+                # (finish_reason=length)、肝心の content が空→フィラー化していた。
+                # reasoning_effort=none で思考をOFFにすると答えを直接出す(eval~130で爆速・空応答ゼロ)。
+                # ※ollama の /v1 では "think":false は無視され、"reasoning_effort":"none" が効く(extra_bodyで送る)。
+                # hayate-ft(gemma-3-12b-it ベース)は非thinkingなので reasoning_effort=None→送らない。
+                if reasoning_effort is not None:
+                    create_kwargs["extra_body"] = {"reasoning_effort": reasoning_effort}
+                res = client.chat.completions.create(**create_kwargs)
 
                 # ▼▼▼ 追加: API呼び出し時間計測終了・表示 ▼▼▼
                 api_elapsed_time = time.time() - api_start_time
@@ -281,6 +297,7 @@ class OpenAIAdapter:
             "gpt-3.5-turbo": 4096,
             "gpt-4.1": 8192, # 仮
             "gemma4-12b-ctx32k": 32768,  # num_ctx 32768 のローカルカスタムモデル
+            "hayate-ft": 4096,  # QLoRA(gemma-3-12b-it)→GGUF。Modelfile の num_ctx 4096
             "gemma4:12b": 8192,
             "gemma4:e4b": 8192,
         }

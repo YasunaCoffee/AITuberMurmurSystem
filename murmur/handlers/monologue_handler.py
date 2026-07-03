@@ -12,6 +12,12 @@ from app.conversation_history import ConversationHistory
 from app.memory_manager import MemoryManager
 from config import config
 from murmur.runtime.character_runtime import get_character, resolve_character_path, get_monologue_basename
+from murmur.handlers.finetuned_prompt_builder import (
+    FINETUNED_SYSTEM_PROMPT,
+    build_monologue,
+    extract_theme_label,
+    pick_monologue_mode,
+)
 
 
 class MonologueHandler:
@@ -22,7 +28,9 @@ class MonologueHandler:
         
         # モード管理システムを初期化
         self.mode_manager = ModeManager()
-        
+        # 直前に使った独り言モード[A-H]（連続重複を避けるため保持）
+        self._last_monologue_mode = None
+
         # マスタープロンプト管理システムを初期化
         self.master_prompt_manager = MasterPromptManager()
         
@@ -31,11 +39,9 @@ class MonologueHandler:
             # プロンプト管理の初期化
             self.prompt_manager = PromptManager(monologue_primary=get_monologue_basename())
             
-            # OpenAIアダプターの初期化
-            system_prompt_path = resolve_character_path(get_character().prompts.persona_prompt)
-            with open(system_prompt_path, "r", encoding="utf-8") as f:
-                system_prompt = f.read()
-            self.openai_adapter = OpenAIAdapter(system_prompt, silent_mode=False)
+            # OpenAIアダプターの初期化（hayate-ft 用: system は学習時の固定3行。
+            # 人格は重みに焼かれているため persona_prompt.txt は読み込まない）
+            self.openai_adapter = OpenAIAdapter(FINETUNED_SYSTEM_PROMPT, silent_mode=False)
             
             # 会話履歴とメモリ管理の初期化
             self.conversation_history = ConversationHistory(self.openai_adapter)
@@ -139,61 +145,29 @@ class MonologueHandler:
         テーマに基づいたプロンプトを生成します。
         """
         try:
-            specific_task_prompt = ""
-            # theme_contentが直接指定されている場合、最優先で使用
-            if theme_content:
-                theme_info = self._extract_theme_info(theme_content)
-                specific_task_prompt = self._build_themed_monologue_prompt(theme_info)
-                print("[MonologueHandler] Loaded monologue theme from provided content.")
-
-            # プリフェッチ時（theme_file is None）の処理 - 常にテーマ関連の内容を生成する
-            elif theme_file is None:
-                # ModeManagerから現在のテーマを取得
-                current_theme_content = self.mode_manager.get_theme_content()
-                if not current_theme_content:
-                    print("[MonologueHandler] No theme content from ModeManager for prefetch, using fallback.")
-                    # フォールバックとしてデフォルトのプロンプトを使う
-                    prompt_template = self.prompt_manager.get_prompt(prompt_name)
-                    specific_task_prompt = prompt_template
-                else:
-                    # テーマ情報からプロンプトを生成
-                    theme_info = self._extract_theme_info(current_theme_content)
-                    specific_task_prompt = self._build_themed_monologue_prompt(theme_info)
-            else:
-                # theme_fileが指定されている場合、その内容を読み込む
+            # テーマ本文を決定: theme_content > theme_file > ModeManager
+            content = theme_content
+            if content is None and theme_file:
                 try:
                     with open(theme_file, "r", encoding="utf-8") as f:
-                        theme_content = f.read()
-                    theme_info = self._extract_theme_info(theme_content)
-                    specific_task_prompt = self._build_themed_monologue_prompt(theme_info)
-                    print(f"[MonologueHandler] Loaded monologue theme from path: {theme_file}")
-                except FileNotFoundError:
-                    print(f"[MonologueHandler] Error: Theme file not found at {theme_file}, using default prompt.")
-                    prompt_template = self.prompt_manager.get_prompt(prompt_name)
-                    specific_task_prompt = prompt_template
+                        content = f.read()
+                    print(f"[MonologueHandler] Loaded theme from path: {theme_file}")
                 except Exception as e:
-                    print(f"[MonologueHandler] Error reading theme file at {theme_file}: {e}, using default prompt.")
-                    prompt_template = self.prompt_manager.get_prompt(prompt_name)
-                    specific_task_prompt = prompt_template
-            
-            # マスタープロンプトと統合
-            final_prompt = self.master_prompt_manager.wrap_task_with_master_prompt(
-                specific_task_prompt=specific_task_prompt,
-                memory_summary=self.memory_manager.get_context_summary() if self.memory_manager else "",
-                conversation_history="", # 特定プロンプトの場合は履歴を限定
-                current_mode="prompt_file_monologue"
-            )
-            
-            print(f"[MonologueHandler] Integrated with master prompt ({len(final_prompt)} chars)")
-            return final_prompt
+                    print(f"[MonologueHandler] Theme file read failed ({theme_file}): {e}")
+            if content is None:
+                content = self.mode_manager.get_theme_content()
+
+            # 短いテーマ名を抽出し、直前と重複しない独り言モードを選んで組み立てる
+            theme_label = extract_theme_label(content or "")
+            mode = pick_monologue_mode(exclude=self._last_monologue_mode)
+            self._last_monologue_mode = mode
+            prompt = build_monologue(theme_label, mode=mode)
+            print(f"[MonologueHandler] FT monologue prompt: {prompt}")
+            return prompt
 
         except Exception as e:
             print(f"[MonologueHandler] Error building monologue prompt: {e}")
-            # エラー時は汎用的なプロンプトを返す
-            return self.master_prompt_manager.wrap_task_with_master_prompt(
-                specific_task_prompt="何か面白いことについて、自由に独り言を話してください。",
-                current_mode="fallback_monologue"
-            )
+            return build_monologue("フリートーク")
 
     def _build_themed_monologue_prompt(self, theme_info: dict) -> str:
         """テーマ情報に基づいて独り言のプロンプトを生成する"""

@@ -22,6 +22,10 @@ from app.conversation_history import ConversationHistory
 from app.memory_manager import MemoryManager
 from config import config
 from murmur.runtime.character_runtime import get_character, resolve_character_path, get_monologue_basename
+from murmur.handlers.finetuned_prompt_builder import (
+    FINETUNED_SYSTEM_PROMPT,
+    build_comment_response,
+)
 
 
 class CommentHandler:
@@ -56,12 +60,9 @@ class CommentHandler:
             self.comment_filter = CommentFilter(filter_config_path)
             print("[CommentHandler] ✅ CommentFilter initialized")
             
-            # OpenAIアダプターの初期化
+            # OpenAIアダプターの初期化（hayate-ft 用: system は学習時の固定3行）
             print("[CommentHandler] 🔍 Initializing OpenAIAdapter...")
-            system_prompt_path = resolve_character_path(get_character().prompts.persona_prompt)
-            with open(system_prompt_path, "r", encoding="utf-8") as f:
-                system_prompt = f.read()
-            self.openai_adapter = OpenAIAdapter(system_prompt, silent_mode=False)
+            self.openai_adapter = OpenAIAdapter(FINETUNED_SYSTEM_PROMPT, silent_mode=False)
             print("[CommentHandler] ✅ OpenAIAdapter initialized")
             
             # 会話履歴とメモリ管理の初期化
@@ -571,176 +572,32 @@ class CommentHandler:
     def _build_comment_response_prompt_optimized(
         self, comments: List[Any]
     ) -> str:
+        """hayate-ft の学習形式でコメント応答 user プロンプトを構築する。
+
+        複数コメントが来た場合は代表1件（最新）に応答する（学習は単一コメント形式
+        「視聴者コメントに応答: ○○さん「…」」）。関連性判定・話題抽出・記憶/履歴
+        取得の追加LLM呼び出しは廃止し、事前の comment_filter による足切りのみに依存する。
         """
-        最適化されたコメント応答プロンプト構築（高速化版）
-        """
-        # コメントテキストを抽出（関連性チェック用）
-        comment_texts = [self._extract_comment_text(comment) for comment in comments]
-        # ユーザー名付きコメントテキストを抽出（読み上げ用）
-        comment_texts_with_username = [
-            self._extract_comment_with_username(comment) for comment in comments
-        ]
-        
-        if not self.prompt_manager:
-            return (
-                "以下のコメントに自然に返答してください："
-                f"{', '.join(comment_texts_with_username)}"
-            )
-            
-        if not self.conversation_history or not self.memory_manager:
-            # 最小限のプロンプト管理のみ使用
-            context = {"comments": comment_texts}
-            prompt_template = self.prompt_manager.get_comment_response_prompt(
-                context
-            )
-            return prompt_template.format(
-                comments=", ".join(comment_texts_with_username)
-            )
-            
+        if not comments:
+            return None
+        # 最新の1件を代表として応答する（複数まとめ応答は学習分布外のため避ける）
+        target = comments[-1]
+        username = self._extract_username(target)
+        text = self._extract_comment_text(target)
+        max_len = getattr(config.comments, "max_length", 150)
+        prompt = build_comment_response(username, text, comment_max_len=max_len)
+
+        # 直前のAI発言を文脈保持のため記録（プロンプトには載せない）
         try:
-            # 高速モード切り替え（統合応答モード）
-            current_mode = self.mode_manager.get_current_mode()
-            if current_mode != ConversationMode.INTEGRATED_RESPONSE and current_mode != ConversationMode.THEMED_MONOLOGUE:
-                self.mode_manager.switch_mode(
-                    target_mode=ConversationMode.INTEGRATED_RESPONSE,
-                    has_comments=True,
-                    comment_count=len(comments)
-                )
-            
             self.mode_manager.increment_duration()
-            
-            print(f"[CommentHandler] 🎯 Using optimized integrated response mode (comments: {len(comments)})")
-            
-            # 並列でデータ取得（最適化・タイムアウト付き）
-            try:
-                with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-                    # 非同期でメモリと履歴を同時取得
-                    memory_future = executor.submit(self.memory_manager.get_context_summary)
-                    history_future = executor.submit(self.conversation_history.get_recent_conversations, "general", 3)  # limitを5→3に削減
-                    
-                    # 結果を取得（5秒タイムアウト）
-                    memory_summary = memory_future.result(timeout=5.0)
-                    recent_conversations = history_future.result(timeout=5.0)
-            except concurrent.futures.TimeoutError:
-                print("[CommentHandler] ⚠️ Timeout in parallel data fetching, using fallback")
-                memory_summary = "（メモリ取得中...）"
-                recent_conversations = []
-            except Exception as e:
-                print(f"[CommentHandler] ⚠️ Error in parallel data fetching: {e}")
-                memory_summary = "（メモリエラー）"
-                recent_conversations = []
-            
-            # トークン数管理
-            # プロンプトの固定部分のトークン数を計算
-            base_prompt_text = (
-                f"{memory_summary}\n"
-                f"{self._create_contextual_comments_summary(comment_texts, recent_conversations)}\n"
-                f"comment: {', '.join(comment_texts_with_username)}"
-            )
-            base_tokens = self.openai_adapter._count_tokens(base_prompt_text, self.openai_adapter.model_response)
-            
-            # 応答生成のためのバッファ
-            response_buffer_tokens = 1000 # 応答用に1000トークンを確保
-            
-            # 会話履歴に使えるトークン数を計算
-            max_history_tokens = self.openai_adapter._get_max_tokens_for_model(
-                self.openai_adapter.model_response
-            ) - base_tokens - response_buffer_tokens
+        except Exception:
+            pass
 
-            # 詳細な会話履歴フォーマット（トークン数制限付き）
-            history_str = self._format_conversation_history_detailed(
-                recent_conversations, max_history_tokens
-            )
-            
-            # 最新の発言を取得（AI応答の連続性のため）
-            last_ai_response = getattr(
-                self.mode_manager, 'last_ai_utterance', None
-            ) or "（まだ会話がありません）"
-            last_sentence = (
-                recent_conversations[-1].get("response", last_ai_response)
-                if recent_conversations else last_ai_response
-            )
-            
-            # 詳細なコメント要約（話題の連続性のため）
-            recent_comments_summary = self._create_contextual_comments_summary(
-                comment_texts, recent_conversations
-            )
-            
-            # 会話の文脈情報を取得
-            conversation_context = (
-                self.mode_manager.get_conversation_context()
-                if hasattr(self.mode_manager, 'get_conversation_context')
-                else {}
-            )
-            
-            # ModeManagerから変数を取得
-            variables = self.mode_manager.get_prompt_variables(
-                last_sentence=last_sentence,
-                history_str=history_str,
-                memory_summary=memory_summary,
-                recent_comments_summary=recent_comments_summary,
-                comment=", ".join(comment_texts_with_username)
-            )
-            
-            # 会話の文脈情報を追加
-            variables.update(conversation_context)
-            
-            # モードに応じて関連性チェックを実行
-            if current_mode == ConversationMode.THEMED_MONOLOGUE:
-                topic_relevance = self._check_poetry_comment_relevance(comment_texts)
-            else:
-                topic_relevance = self._check_topic_relevance(comment_texts)
-
-            # 関連性チェック結果を基に対応方針を決定
-            topic_guidance = self._create_topic_guidance(topic_relevance)
-            variables["topic_guidance"] = topic_guidance
-
-            # 直前の発言を常に初期化（全モード共通）
-            last_utterance = getattr(self.mode_manager, 'last_ai_utterance', None) or ""
-            variables["last_ai_utterance"] = last_utterance
-            
-            # テーマ会話モードの場合、最新のテーマの文脈を追加
-            if current_mode == ConversationMode.THEMED_MONOLOGUE:
-                # 最新のテーマファイルから情報を取得
-                current_themed_context = self._get_current_themed_context()
-                variables["active_theme"] = current_themed_context
-                print(f"[CommentHandler] 🧬 Injecting themed context and last utterance into prompt.")
-                print(f"[CommentHandler] 🎯 Current theme context: {current_themed_context[:100]}..." if current_themed_context else "[CommentHandler] ❌ No theme context available")
-
-            # 統合応答プロンプトテンプレートを取得
-            prompt_template = self.prompt_manager.get_prompt_by_filename("integrated_response.txt")
-            
-            if prompt_template:
-                # 統合応答プロンプトを構築
-                integrated_response_prompt = prompt_template.format(**variables)
-                
-                # マスタープロンプトと統合
-                final_prompt = self.master_prompt_manager.wrap_task_with_master_prompt(
-                    specific_task_prompt=integrated_response_prompt,
-                    memory_summary=memory_summary,
-                    conversation_history=history_str,
-                    current_mode="integrated_response"
-                )
-                
-                print(
-                    "[CommentHandler] ⚡ Optimized prompt built "
-                    f"({len(final_prompt)} chars)"
-                )
-                return final_prompt
-            else:
-                print(
-                    "[CommentHandler] integrated_response.txt not found, "
-                    "using fallback"
-                )
-                # フォールバック：従来の方式
-                context = {"comments": comment_texts}
-                return self.prompt_manager.get_comment_response_prompt(context)
-            
-        except Exception as e:
-            print(f"[CommentHandler] Error building optimized prompt: {e}")
-            # フォールバック：PromptManagerを使用
-            context = {"comments": comment_texts}
-            return self.prompt_manager.get_comment_response_prompt(context)
+        if len(comments) > 1:
+            print(f"[CommentHandler] {len(comments)}件中、代表1件に応答: {prompt}")
+        else:
+            print(f"[CommentHandler] FT comment prompt: {prompt}")
+        return prompt
 
     def _format_conversation_history_light(self, conversations: List[dict]) -> str:
         """
