@@ -56,14 +56,18 @@ openai:
   #   ・gemma4:12b は本編を正しく生成できる。ただし1発話の生成が約34秒（RTX4080/16GB, q4）。→ network.api_timeout を 70 に延長必須。
   #   ・プリフェッチ(MainController)が現発話の再生中(本編1本=約40〜60秒)に次を裏で生成するので、タイムアウトさえ確保すれば体感の間（フィラー）は出ない。
   #   ・本番Case配信で安定していたのは GPT-4.1(OpenAI) だが API キー要・従量課金のため、ローカル運用は 12b を採用。OpenAIに戻すなら .env の OPENAI_BASE_URL/KEY とここを gpt-4.1 に。
+  # 【2026-07-04 hayate-ft 移行】発話生成(response)は QLoRA ファインチューニングモデル
+  #   hayate-ft-v2 に切替（2026-07-05 再学習版に更新）（system 3行＋学習形式の軽量プロンプト・temp0.9・num_ctx4096・約2〜6s/発話）。
+  #   配信要約(stream_summary)とテーマスコア(theme_scoring)は構造化タスクで FT の地力が落ちるため
+  #   gemma4-12b-ctx32k を据え置く。selection/emotion/conversation_history はコード未参照の予約キー。
   models:
-    default: "gemma4-12b-ctx32k"           # デフォルトモデル
-    selection: "gemma4-12b-ctx32k"         # 選択処理用
-    response: "gemma4-12b-ctx32k"          # 応答生成用
-    emotion: "gemma4-12b-ctx32k"           # 感情処理用
-    stream_summary: "gemma4-12b-ctx32k"    # 配信要約用
-    theme_scoring: "gemma4-12b-ctx32k"     # テーマスコア測定用
-    conversation_history: "gemma4-12b-ctx32k"  # 会話履歴処理用
+    default: "hayate-ft-v2"                   # 接続テスト用（発話モデルの疎通確認）
+    selection: "gemma4-12b-ctx32k"         # 選択処理用（未使用）
+    response: "hayate-ft-v2"                  # 応答生成用（発話：ファインチューニング）
+    emotion: "gemma4-12b-ctx32k"           # 感情処理用（未使用）
+    stream_summary: "gemma4-12b-ctx32k"    # 配信要約用（構造化タスク: gemma据え置き）
+    theme_scoring: "gemma4-12b-ctx32k"     # テーマスコア測定用（構造化タスク: gemma据え置き）
+    conversation_history: "gemma4-12b-ctx32k"  # 会話履歴処理用（未使用）
   
   # API設定
   api:

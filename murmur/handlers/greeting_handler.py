@@ -18,6 +18,13 @@ from app.conversation_history import ConversationHistory
 from app.memory_manager import MemoryManager
 from config import config
 from murmur.runtime.character_runtime import get_character, resolve_character_path, get_monologue_basename
+from murmur.handlers.finetuned_prompt_builder import (
+    FINETUNED_SYSTEM_PROMPT,
+    build_initial_greeting,
+    build_ending_greeting,
+    extract_theme_label,
+)
+from murmur.quality.guarded import generate_speech
 
 
 class GreetingHandler:
@@ -44,11 +51,8 @@ class GreetingHandler:
             # プロンプト管理の初期化
             self.prompt_manager = PromptManager(monologue_primary=get_monologue_basename())
             
-            # OpenAI Adapterの初期化
-            system_prompt_path = resolve_character_path(get_character().prompts.persona_prompt)
-            with open(system_prompt_path, "r", encoding="utf-8") as f:
-                system_prompt = f.read()
-            self.openai_adapter = OpenAIAdapter(system_prompt, silent_mode=False)
+            # OpenAI Adapterの初期化（hayate-ft 用: system は学習時の固定3行）
+            self.openai_adapter = OpenAIAdapter(FINETUNED_SYSTEM_PROMPT, silent_mode=False)
             
             # 会話履歴管理の初期化
             self.conversation_history = ConversationHistory(self.openai_adapter)
@@ -102,11 +106,16 @@ class GreetingHandler:
             
             # プロンプトを構築
             prompt = self._build_initial_greeting_prompt()
-            
-            # LLMで生成
-            response = self.openai_adapter.create_chat_for_response(prompt)
+
+            # LLMで生成（品質ゲート付き: 検査→fatalなら自動リトライ→ログ記録）
+            response, quality = generate_speech(
+                self.openai_adapter, prompt, kind="initial_greeting",
+                meta={"task_id": command.task_id},
+            )
+            if not response:
+                raise ValueError(f"quality gate rejected: {quality.fatal}")
             print(f"[GreetingHandler] LLM response received: {response[:100]}...")
-            
+
             # 文に分割
             sentences = self._split_into_sentences(response)
             
@@ -132,11 +141,16 @@ class GreetingHandler:
             
             # プロンプトを構築
             prompt = self._build_ending_greeting_prompt(command.bridge_text, command.stream_summary)
-            
-            # LLMで生成
-            response = self.openai_adapter.create_chat_for_response(prompt)
+
+            # LLMで生成（品質ゲート付き: 検査→fatalなら自動リトライ→ログ記録）
+            response, quality = generate_speech(
+                self.openai_adapter, prompt, kind="ending_greeting",
+                meta={"task_id": command.task_id},
+            )
+            if not response:
+                raise ValueError(f"quality gate rejected: {quality.fatal}")
             print(f"[GreetingHandler] LLM response received: {response[:100]}...")
-            
+
             # 文に分割
             sentences = self._split_into_sentences(response)
             
@@ -156,71 +170,30 @@ class GreetingHandler:
             self.event_queue.put(event)
 
     def _build_initial_greeting_prompt(self) -> str:
-        """開始時の挨拶プロンプトを構築する"""
+        """開始挨拶の user プロンプトを hayate-ft の学習形式で構築する。"""
         try:
-            # 汎用的な挨拶プロンプトを読み込む
-            _gp = get_character().prompts
-            _initial = (
-                resolve_character_path(_gp.greeting_prompt)
-                if _gp.greeting_prompt
-                else os.path.join(config.paths.prompts, "initial_greeting.txt")
-            )
-            with open(_initial, "r", encoding="utf-8") as f:
-                greeting_prompt = f.read()
-            
-            # 記憶と履歴を取得
-            memory_summary = self.memory_manager.get_context_summary() if self.memory_manager else ""
-            
-            # 最近の会話履歴を取得
-            recent_conversations = []
-            if self.conversation_history:
-                recent_conversations = self.conversation_history.get_recent_conversations("general", limit=3)
-            
-            # マスタープロンプトと統合
-            final_prompt = self.master_prompt_manager.wrap_task_with_master_prompt(
-                specific_task_prompt=greeting_prompt,
-                memory_summary=memory_summary,
-                current_mode="initial_greeting"
-            )
-            
-            print(f"[GreetingHandler] Generic initial greeting integrated with master prompt ({len(final_prompt)} chars)")
-            return final_prompt
-            
+            theme = "フリートーク"
+            if self.mode_manager:
+                theme = extract_theme_label(self.mode_manager.get_theme_content() or "")
+            prompt = build_initial_greeting(theme)
+            print(f"[GreetingHandler] FT initial greeting prompt: {prompt}")
+            return prompt
         except Exception as e:
             print(f"[GreetingHandler] Error building initial greeting prompt: {e}")
-            return f"あなたは{get_character().name}です。配信開始の挨拶をしてください。"
+            return build_initial_greeting("フリートーク")
 
     def _build_ending_greeting_prompt(self, bridge_text: str, stream_summary: str) -> str:
-        """終了時の挨拶プロンプトを構築する"""
+        """終了挨拶の user プロンプトを hayate-ft の学習形式で構築する。"""
         try:
-            # プロンプトファイルを読み込み
-            _ep = get_character().prompts
-            _ending = (
-                resolve_character_path(_ep.ending_prompt)
-                if _ep.ending_prompt
-                else os.path.join(config.paths.prompts, "ending_greeting.txt")
-            )
-            with open(_ending, 'r', encoding='utf-8') as f:
-                prompt_template = f.read()
-            
-            # 変数を埋め込み
-            ending_greeting_prompt = prompt_template.format(
-                bridge_text=bridge_text or "それでは、今日の思考実験はここまでとしましょう。",
-                stream_summary=stream_summary or "本日も様々な哲学的問いについて考えを深めることができました。"
-            )
-            
-            # マスタープロンプトと統合
-            final_prompt = self.master_prompt_manager.wrap_task_with_master_prompt(
-                specific_task_prompt=ending_greeting_prompt,
-                current_mode="ending_greeting"
-            )
-            
-            print(f"[GreetingHandler] Ending greeting integrated with master prompt ({len(final_prompt)} chars)")
-            return final_prompt
-            
+            summary = (stream_summary or bridge_text or "").strip()
+            if not summary:
+                summary = "様々な問いについて皆さんと考えを深めた"
+            prompt = build_ending_greeting(summary)
+            print(f"[GreetingHandler] FT ending greeting prompt: {prompt}")
+            return prompt
         except Exception as e:
             print(f"[GreetingHandler] Error building ending greeting prompt: {e}")
-            return f"今日の配信を終了します。{bridge_text} {stream_summary} ありがとうございました。"
+            return build_ending_greeting("様々な問いについて考えを深めた")
 
     def _split_into_sentences(self, text: str) -> List[str]:
         """テキストを文に分割する"""

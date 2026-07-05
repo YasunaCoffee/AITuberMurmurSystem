@@ -25,7 +25,8 @@ class TestMonologueHandler(unittest.TestCase):
             command = PrepareMonologue(task_id=task_id, theme_file=theme_file)
             
             # モックの応答とメソッドを設定
-            mock_response_text = "これはテスト用の独り言です。"
+            # 品質ゲート（murmur.quality）を通過する長さ・口調のテキストにする
+            mock_response_text = "これはテスト用の独り言です。今日も皆さんと一緒に思考を深めていきますね。"
             mock_openai_adapter.create_chat_for_response.return_value = mock_response_text
             handler._split_into_sentences = MagicMock(return_value=[mock_response_text])
 
