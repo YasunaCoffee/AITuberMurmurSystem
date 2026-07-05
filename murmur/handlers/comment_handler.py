@@ -26,6 +26,7 @@ from murmur.handlers.finetuned_prompt_builder import (
     FINETUNED_SYSTEM_PROMPT,
     build_comment_response,
 )
+from murmur.quality.guarded import generate_speech
 
 
 class CommentHandler:
@@ -182,9 +183,15 @@ class CommentHandler:
             print(f"[CommentHandler] 🔍 Step 4: Calling LLM for response generation...")
             llm_start = time.time()
             try:
-                response_text = self.openai_adapter.create_chat_for_response(prompt)
+                # 品質ゲート付き生成（検査→fatalなら自動リトライ→ログ記録）
+                response_text, quality = generate_speech(
+                    self.openai_adapter, prompt, kind="comment",
+                    meta={"task_id": command.task_id},
+                )
                 llm_time = time.time() - llm_start
                 print(f"[CommentHandler] ⚡ LLM response received in {llm_time:.2f}s")
+                if quality.warnings:
+                    print(f"[CommentHandler] Quality warnings: {quality.warnings}")
             except Exception as e:
                 llm_time = time.time() - llm_start
                 print(f"[CommentHandler] ❌ LLM call failed after {llm_time:.2f}s: {e}")

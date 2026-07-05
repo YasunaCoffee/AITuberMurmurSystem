@@ -18,6 +18,7 @@ from murmur.handlers.finetuned_prompt_builder import (
     extract_theme_label,
     pick_monologue_mode,
 )
+from murmur.quality.guarded import generate_speech
 
 
 class MonologueHandler:
@@ -88,13 +89,17 @@ class MonologueHandler:
                 theme_content=command.theme_content
             )
             
-            # LLMで生成
-            response = self.openai_adapter.create_chat_for_response(prompt)
-            print(f"[MonologueHandler] LLM response received: {response[:100]}...")
-            
+            # LLMで生成（品質ゲート付き: 検査→fatalなら自動リトライ→ログ記録）
+            response, quality = generate_speech(
+                self.openai_adapter, prompt, kind="monologue",
+                meta={"mode": self._last_monologue_mode, "task_id": command.task_id},
+            )
+
             if response:
                 print(f"[MonologueHandler] LLM response received: {response[:100]}...")
-                
+                if quality.warnings:
+                    print(f"[MonologueHandler] Quality warnings: {quality.warnings}")
+
                 # ★ 生成した発言をModeManagerに記録
                 self.mode_manager.set_last_ai_utterance(response)
                 

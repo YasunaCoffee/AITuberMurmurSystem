@@ -36,3 +36,7 @@ Thumbs.db
 
 # 実行時に生成されるサマリー出力
 summary/
+
+# 発話品質ログと再学習データ候補（ローカル専用）
+logs/speech_quality/
+data/ft_feedback/

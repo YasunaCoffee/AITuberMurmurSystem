@@ -24,6 +24,7 @@ from murmur.handlers.finetuned_prompt_builder import (
     build_ending_greeting,
     extract_theme_label,
 )
+from murmur.quality.guarded import generate_speech
 
 
 class GreetingHandler:
@@ -105,11 +106,16 @@ class GreetingHandler:
             
             # プロンプトを構築
             prompt = self._build_initial_greeting_prompt()
-            
-            # LLMで生成
-            response = self.openai_adapter.create_chat_for_response(prompt)
+
+            # LLMで生成（品質ゲート付き: 検査→fatalなら自動リトライ→ログ記録）
+            response, quality = generate_speech(
+                self.openai_adapter, prompt, kind="initial_greeting",
+                meta={"task_id": command.task_id},
+            )
+            if not response:
+                raise ValueError(f"quality gate rejected: {quality.fatal}")
             print(f"[GreetingHandler] LLM response received: {response[:100]}...")
-            
+
             # 文に分割
             sentences = self._split_into_sentences(response)
             
@@ -135,11 +141,16 @@ class GreetingHandler:
             
             # プロンプトを構築
             prompt = self._build_ending_greeting_prompt(command.bridge_text, command.stream_summary)
-            
-            # LLMで生成
-            response = self.openai_adapter.create_chat_for_response(prompt)
+
+            # LLMで生成（品質ゲート付き: 検査→fatalなら自動リトライ→ログ記録）
+            response, quality = generate_speech(
+                self.openai_adapter, prompt, kind="ending_greeting",
+                meta={"task_id": command.task_id},
+            )
+            if not response:
+                raise ValueError(f"quality gate rejected: {quality.fatal}")
             print(f"[GreetingHandler] LLM response received: {response[:100]}...")
-            
+
             # 文に分割
             sentences = self._split_into_sentences(response)
             
