@@ -25,6 +25,7 @@ from murmur.runtime.character_runtime import get_character, resolve_character_pa
 from murmur.handlers.finetuned_prompt_builder import (
     FINETUNED_SYSTEM_PROMPT,
     build_comment_response,
+    extract_theme_label,
 )
 from murmur.quality.guarded import generate_speech
 
@@ -592,7 +593,17 @@ class CommentHandler:
         username = self._extract_username(target)
         text = self._extract_comment_text(target)
         max_len = getattr(config.comments, "max_length", 150)
-        prompt = build_comment_response(username, text, comment_max_len=max_len)
+        # v2 形式: いまの配信の話題と直前の発話を添えて、文脈の通った応答にする
+        try:
+            topic = extract_theme_label(self.mode_manager.get_theme_content() or "")
+        except Exception:
+            topic = None
+        prompt = build_comment_response(
+            username, text,
+            topic=topic,
+            last_utterance=getattr(self.mode_manager, "last_ai_utterance", None),
+            comment_max_len=max_len,
+        )
 
         # 直前のAI発言を文脈保持のため記録（プロンプトには載せない）
         try:

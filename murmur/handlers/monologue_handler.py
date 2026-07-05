@@ -14,6 +14,7 @@ from config import config
 from murmur.runtime.character_runtime import get_character, resolve_character_path, get_monologue_basename
 from murmur.handlers.finetuned_prompt_builder import (
     FINETUNED_SYSTEM_PROMPT,
+    MONOLOGUE_MODES,
     build_monologue,
     extract_theme_label,
     pick_monologue_mode,
@@ -162,11 +163,17 @@ class MonologueHandler:
             if content is None:
                 content = self.mode_manager.get_theme_content()
 
-            # 短いテーマ名を抽出し、直前と重複しない独り言モードを選んで組み立てる
+            # 短いテーマ名を抽出し、ModeManager の現在モード＋直前の発話で
+            # v2 チェーン形式の user を組み立てる（思考が前の断片から連続する）
             theme_label = extract_theme_label(content or "")
-            mode = pick_monologue_mode(exclude=self._last_monologue_mode)
+            mode = getattr(self.mode_manager.current_mode, "value", None)
+            if mode not in MONOLOGUE_MODES:
+                mode = pick_monologue_mode(exclude=self._last_monologue_mode)
             self._last_monologue_mode = mode
-            prompt = build_monologue(theme_label, mode=mode)
+            prompt = build_monologue(
+                theme_label, mode=mode,
+                last_utterance=self.mode_manager.last_ai_utterance,
+            )
             print(f"[MonologueHandler] FT monologue prompt: {prompt}")
             return prompt
 

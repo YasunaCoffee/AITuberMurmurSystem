@@ -61,7 +61,13 @@ class TestCheckSpeech:
 
     def test_prompt_echo_is_fatal(self):
         report = check_speech(
-            "独り言モード[C]ですね。今日は情報理論について考えてみます。皆さんはどうですか。"
+            "独り言（normal_monologue）ですね。今日は情報理論について考えてみます。皆さんはどうですか。"
+        )
+        assert any(f.startswith("prompt_echo") for f in report.fatal)
+
+    def test_prompt_echo_prev_utterance_is_fatal(self):
+        report = check_speech(
+            "直前の発言:「記憶の話」を受けて続けます。記憶というのは不思議な構造をしていますね。"
         )
         assert any(f.startswith("prompt_echo") for f in report.fatal)
 

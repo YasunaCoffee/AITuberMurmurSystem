@@ -86,18 +86,18 @@ def build_cases():
     """
     return [
         (
-            "独り言C: コルモゴロフ複雑性",
-            build_monologue("情報理論（コルモゴロフ複雑性）", mode="C"),
+            "独り言normal: コルモゴロフ複雑性",
+            build_monologue("情報理論（コルモゴロフ複雑性）", mode="normal_monologue"),
             "情報理論、特にコルモゴロフ複雑性について、あなたの考察を独り言として話してください。",
         ),
         (
-            "独り言A: 大規模言語モデルの創発能力",
-            build_monologue("大規模言語モデルの創発能力", mode="A"),
+            "独り言themed: 大規模言語モデルの創発能力",
+            build_monologue("大規模言語モデルの創発能力", mode="themed_monologue"),
             "最近観測した興味深いデータとして、大規模言語モデルの創発能力について独り言を話してください。",
         ),
         (
-            "独り言G: Outer Wildsの構造",
-            build_monologue("『Outer Wilds』の知識駆動の進行", mode="G"),
+            "独り言chill: Outer Wildsの構造",
+            build_monologue("『Outer Wilds』の知識駆動の進行", mode="chill_chat"),
             "好きな創作物の構造分析として、ゲーム『Outer Wilds』の知識駆動の進行について独り言を話してください。",
         ),
         (
