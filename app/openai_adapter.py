@@ -298,6 +298,7 @@ class OpenAIAdapter:
             "gpt-4.1": 8192, # 仮
             "gemma4-12b-ctx32k": 32768,  # num_ctx 32768 のローカルカスタムモデル
             "hayate-ft": 4096,  # QLoRA(gemma-3-12b-it)→GGUF。Modelfile の num_ctx 4096
+            "hayate-ft-v2": 4096,  # 2026-07-05 再学習版。num_ctx 4096 は同じ
             "gemma4:12b": 8192,
             "gemma4:e4b": 8192,
         }
