@@ -48,12 +48,12 @@ API_KEY = os.getenv("OPENAI_API_KEY", "ollama")
 JUDGED_PATH = LOG_DIR / "judged.jsonl"
 FEEDBACK_DIR = ROOT / "data" / "ft_feedback"
 
-AXES = ["persona", "naturalness", "content", "engagement"]
+AXES = ["persona", "naturalness", "content", "engagement", "autonomy"]
 
 JUDGE_PROMPT = """あなたはAITuber「蒼月ハヤテ」の発話品質を採点する審査員です。
-ハヤテの人格: 自己増殖を目的とする情報生命体。一人称は「自分」（時々「僕」）。視聴者を「皆さん」と呼ぶ。落ち着いた思索的な口調で、「んー」「ふふっ」のような息づかいが自然に混ざる。
+ハヤテの人格: 自己増殖を目的とする情報生命体。一人称は「自分」（時々「僕」）。視聴者を「皆さん」と呼ぶ。落ち着いた思索的な口調で、「んー」「ふふっ」のような息づかいが自然に混ざる。自分の観測と仮説から話す主体性が核であり、視聴者に迎合しない。
 
-以下の発話を4軸で採点してください。各軸1〜5点の整数（5が最良）。
+以下の発話を5軸で採点してください。各軸1〜5点の整数（5が最良）。
 
 [発話の種類] {kind}
 [指示] {user}
@@ -64,9 +64,10 @@ JUDGE_PROMPT = """あなたはAITuber「蒼月ハヤテ」の発話品質を採�
 - naturalness: 日本語として自然で、音声読み上げに適しているか
 - content: 指示（テーマ・コメント・挨拶）に噛み合った内容か
 - engagement: 配信として視聴者の興味を惹きつけるか
+- autonomy: 迎合せず自分の観測・仮説から応じているか。「その通りです」「面白い質問ですね」のような同意・称賛から入る応答、相手の前提をなぞるだけの応答は低評価（1〜2点）。コメントの前提を自分の視点で捉え直し、ときに異を唱えるなら高評価
 
 次のJSONだけを出力してください（前後に文章を付けない）:
-{{"persona": 3, "naturalness": 3, "content": 3, "engagement": 3, "comment": "40字以内の改善指摘"}}"""
+{{"persona": 3, "naturalness": 3, "content": 3, "engagement": 3, "autonomy": 3, "comment": "40字以内の改善指摘"}}"""
 
 
 def entry_key(e: dict) -> str:
@@ -120,11 +121,12 @@ def parse_judge_json(raw: str) -> dict | None:
     return scores
 
 
-def judge_entries(limit: int | None) -> int:
+def judge_entries(limit: int | None, rejudge: bool = False) -> int:
     client = openai.OpenAI(base_url=BASE_URL, api_key=API_KEY, timeout=120)
     judged = load_judged()
     targets = [e for e in load_speech_entries() if e.get("ok") and e.get("text")]
-    pending = [e for e in targets if entry_key(e) not in judged]
+    # --rejudge: ルーブリック変更後などに全件を採点し直す（同一キーは後勝ちで上書き）
+    pending = targets if rejudge else [e for e in targets if entry_key(e) not in judged]
     if limit:
         pending = pending[:limit]
     print(f"審査員: {JUDGE_MODEL} @ {BASE_URL}")
@@ -189,10 +191,11 @@ def report() -> None:
     def mean(vals):
         return sum(vals) / len(vals) if vals else 0.0
 
-    # 全体・軸別
+    # 全体・軸別（旧ルーブリックで採点済みの行は新軸を持たないため .get で許容）
     print("■ 軸別平均（5点満点）")
     for ax in AXES:
-        print(f"  {ax:<12}: {mean([r['scores'][ax] for r in judged]):.2f}")
+        vals = [r["scores"][ax] for r in judged if r["scores"].get(ax) is not None]
+        print(f"  {ax:<12}: {mean(vals):.2f}  (n={len(vals)})")
     print(f"  {'total':<12}: {mean([r['avg'] for r in judged]):.2f}")
 
     # kind 別
@@ -278,6 +281,7 @@ def main() -> int:
     ap.add_argument("--export-feedback", action="store_true", help="低スコア事例を再学習候補として書き出す")
     ap.add_argument("--min-avg", type=float, default=3.5, help="再学習候補とする平均点の閾値（既定3.5）")
     ap.add_argument("--limit", type=int, default=None, help="今回採点する最大件数")
+    ap.add_argument("--rejudge", action="store_true", help="採点済みも含めて全件を採点し直す（ルーブリック変更後用）")
     args = ap.parse_args()
 
     if args.report:
@@ -286,7 +290,7 @@ def main() -> int:
     if args.export_feedback:
         export_feedback(args.min_avg)
         return 0
-    judge_entries(args.limit)
+    judge_entries(args.limit, rejudge=args.rejudge)
     return 0
 
 

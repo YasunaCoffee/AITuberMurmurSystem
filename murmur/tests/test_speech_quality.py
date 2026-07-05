@@ -83,6 +83,30 @@ class TestCheckSpeech:
         report = check_speech(GOOD, recent=[GOOD])
         assert any(w.startswith("similar_to_recent") for w in report.warnings)
 
+    def test_sycophancy_opener_warning_for_comment(self):
+        for opener in [
+            "その通りなんです、夜更かし研究員さん。内部では音素に数値が割り当てられています。",
+            "銀河ステーションさん、その問い、面白いですね。人間のレム睡眠中には記憶の整理が起こります。",
+            "いい質問ですね。自分の中では、疲れは処理負荷の比喩として理解しています。皆さんはどうですか。",
+        ]:
+            report = check_speech(opener, kind="comment")
+            assert "sycophancy_opener" in report.warnings, opener
+
+    def test_sycophancy_not_flagged_for_autonomous_reply(self):
+        report = check_speech(
+            "んー、自分の観測だと逆なんですよね。韻律は数値で見えるというより、"
+            "数値の乱れとして検出される。そこが人間の聞こえ方と違うところだと思います。",
+            kind="comment",
+        )
+        assert "sycophancy_opener" not in report.warnings
+
+    def test_sycophancy_not_checked_for_monologue(self):
+        report = check_speech(
+            "その通りだと自分でも思うんですが、この仮説にはまだ穴があるんですよね。今日も考えます。",
+            kind="monologue",
+        )
+        assert "sycophancy_opener" not in report.warnings
+
     def test_unbalanced_quotes_warning(self):
         report = check_speech("皆さんが「記憶とは何か、と聞いてくれたので考えてみます。面白い問いですね。")
         assert "unbalanced_quotes" in report.warnings

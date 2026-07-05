@@ -56,6 +56,17 @@ _PROMPT_ECHOES = [
 
 _JP_CHAR_RE = re.compile(r"[ぁ-んァ-ヶ一-龠ー]")
 
+# コメントへの迎合（同意・称賛から入る応答）。ハヤテは自分の観測・仮説から
+# 応じるキャラであり、相手を肯定してから話し始めるアシスタント的応答は
+# 人格を薄める。冒頭付近に出た場合のみ警告する。
+_SYCOPHANCY_RE = re.compile(
+    r"(その通り|おっしゃる通り|仰る通り|さすが"
+    r"|(?:いい|良い|鋭い|面白い|素晴らしい)(?:質問|問い|指摘|視点|コメント)"
+    r"|(?:質問|問い|指摘|視点|コメント)[、,は]?\s*(?:面白い|鋭い|いい|良い|素晴らしい))"
+)
+# 冒頭何文字までに現れたら「出だしの迎合」とみなすか
+_SYCOPHANCY_HEAD = 50
+
 
 @dataclass
 class QualityReport:
@@ -137,6 +148,10 @@ def check_speech(
         if p in text:
             f.append(f"prompt_echo({p})")
             break
+
+    # コメント応答が同意・称賛から始まる＝迎合（人格が薄まる。改善ループで監視）
+    if kind == "comment" and _SYCOPHANCY_RE.search(text[:_SYCOPHANCY_HEAD]):
+        w.append("sycophancy_opener")
 
     # かぎ括弧の不整合（TTSは読めるが、字幕・ログで崩れる）
     if text.count("「") != text.count("」"):
