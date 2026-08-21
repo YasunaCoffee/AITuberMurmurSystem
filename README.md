@@ -1,3 +1,5 @@
+
+
 # AITuberぶつぶつシステム
 
 ![AITuber](images/AIVTuber.png)
@@ -41,6 +43,7 @@ AITuberのための自動配信システム。テーマに基づいて自動的�
 
 - Python 3.11以上（`pyproject.toml` の `requires-python` に準拠）
 - Poetry（パッケージ管理）
+- Git（リポジトリ取得）
 - AivisSpeech Engine
 - OBS Studio
 - VB-CABLE（音声出力用）
